@@ -7,7 +7,7 @@ import os
 class ellipse():
 	'''This will make an object to describe an ellipse. '''
 	
-	def __init__(self, nu, ra=15, rp=2, inc=0, raan=0, omega=0):
+	def __init__(self, nu, ra=19, rp=2, inc=70, raan=80, omega=300):
 		'''This takes in the six parameters to describe the orbit. 
 		
 		Parameters
@@ -19,7 +19,7 @@ class ellipse():
 		inc - inclination (deg)
 		raan - right angle of ascending node (RAAN) (deg)
 		omega - argument of periapsis (deg)
-		nu - true anomaly (deg) - May be an array. 
+		nu - true anomaly (deg) - Should be an array from 0 to 359 degrees. 
 		
 		'''
 		
@@ -61,6 +61,9 @@ class ellipse():
 		self.v = np.sqrt(mu*(2/self.r - 1/a))
 		
 		#Calculate the flight path angle. 
+		#cos_fpa = self.h/(self.r*self.v)
+		#self.phi = [np.arccos(cos_fpa[i]) if self.nu[i] >= np.pi else -np.arccos(cos_fpa[i]) for i in range(len(self.nu))]
+		
 		self.phi = np.zeros((self.r.size))
 		self.phi[self.nu < np.pi] = np.arccos(self.h/(self.r[self.nu < np.pi]*self.v[self.nu < np.pi]))
 		self.phi[self.nu >= np.pi] = -np.arccos(self.h/(self.r[self.nu >= np.pi]*self.v[self.nu >= np.pi]))

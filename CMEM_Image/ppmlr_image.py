@@ -192,8 +192,23 @@ class ppmlr_image():
 	#PLOTTING FUNCTIONS 
 	###################
 	
-	def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0):
-		'''This will plot the simulated image it has created. '''
+	def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, los_max=6, image_name=None, ellipse=None):
+		'''This will plot the simulated image it has created. 
+		
+		Parameters
+		----------
+		elev - viewing elevation in degrees for 3d viewing model
+		azim - viewing azimuth in degrees for 3d viewing model 
+		cmap - colourmap
+		vmin - min emissivity on colour bar (logged)
+		vmax - max emissivity on colour bar (logged)
+		levels - number of levels on contour maps
+		colour_cap - order of magnitude above vmin to start plotting emissivity 
+		los_max - max los intensity on colourbar
+		image_name - will default to standard name if not specified. must be full path
+		ellipse - ellipse object if you wish to add orbit ellipse. 
+		
+		'''
 		
 		fig = plt.figure(figsize=(8,5))
 		fig.subplots_adjust(left=0.05, wspace=0.2, bottom=0.20) 
@@ -217,7 +232,7 @@ class ppmlr_image():
         # Get contour levels. 
 		levels = np.linspace(vmin, vmax, levels+1)
         
-		mesh = ax.pcolormesh(phi_pixels, theta_pixels, self.los_intensity, cmap=cmap, vmin=0)
+		mesh = ax.pcolormesh(phi_pixels, theta_pixels, self.los_intensity, cmap=cmap, vmin=0, vmax=los_max)
 		ax.set_title("LOS integration through PPMLR\n simulation from SMILE")
 		ax.set_xlabel('deg')
 		ax.set_ylabel('deg')
@@ -247,12 +262,18 @@ class ppmlr_image():
         
         #Add the Earth on. 
 		self.add_earth(ax2) 
+		
+		#Add orbit ellipse if it is provided.
+		if ellipse is not None: 
+			ax2.plot(ellipse.x3/ellipse.RE, ellipse.y3/ellipse.RE, ellipse.z3/ellipse.RE, 'k')
         
 		ax2.set_xlabel('x')
 		ax2.set_ylabel('y')
 		ax2.set_zlabel('z')
 		ax2.set_xlim(-10,30)
-		ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({},{},{})\nAim Point: ({},{},{})'.format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]))
+		ax2.set_ylim(-30,30)
+		ax2.set_zlim(-30,30)
+		ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({:.2f},{:.2f},{:.2f})\nAim Point: ({},{},{})'.format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]))
 		ax2.set_aspect('equal')
 		ax2.view_init(elev,azim) 
 		
@@ -270,9 +291,13 @@ class ppmlr_image():
 		#fig.text(0.5, 0.02, label, ha='center')
                     
         #Save the image to a standard name. 
-		plot_path = os.environ.get("PLOT_PATH") 
+		if image_name is None: 
+			plot_path = os.environ.get("PLOT_PATH") 
         
-		fig.savefig(plot_path+"PPMLR_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
+			fig.savefig(plot_path+"PPMLR_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
+		
+		else:
+			fig.savefig(image_name) 
 	
 		
 	def add_fov_boundaries(self, ax2):
