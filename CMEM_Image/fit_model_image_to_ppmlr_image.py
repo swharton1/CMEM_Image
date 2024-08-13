@@ -161,7 +161,7 @@ class fit_image():
 							
 				# Now get the misfit, (model - observed)**2
 				sq_diff = (los_intensity - self.ppmlr_image.los_intensity)**2
-				cost = sq_diff.sum()/los_intensity.size
+				cost = sq_diff.sum()/self.ppmlr_image.los_intensity.size
 				self.cost_per_iteration.append(cost)
 				self.param_list.append(params)
 				print (cost)
@@ -193,7 +193,7 @@ class fit_image():
 
 				#  Now get the misfit, abs(model - observed)
 				abs_diff = abs(los_intensity - self.ppmlr_image.los_intensity)
-				cost = abs_diff.sum()/self.los_intensity.size
+				cost = abs_diff.sum()/self.ppmlr_image.los_intensity.size
 				self.cost_per_iteration.append(cost)
 				self.param_list.append(params)
 				print (cost)

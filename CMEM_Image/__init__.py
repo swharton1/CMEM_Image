@@ -7,6 +7,7 @@ from . import set_initial_params
 from . import ppmlr_image
 from . import ellipse
 from . import fit_model_image_to_ppmlr_image
+from . import visualise_image_fit 
 
 import os 
 # This is a backup to set the environment variables if they haven't been set externally. 
