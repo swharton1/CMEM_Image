@@ -1,4 +1,4 @@
-#This file will run the CMEM_Image module. 
+#This file will run the code to produce an image through a PPMLR emissivity cube.  
 #It's what you would type in ipython3. 
 import CMEM_Image
 
