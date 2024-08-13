@@ -16,11 +16,11 @@ fit = CMEM_Image.fit_model_image_to_ppmlr_image.fit_image(ppmlr_image, smile)
 fit.fit_function_with_nelder_mead(model='cmem', init_method=2, params0=None, cost_func='absolute') 
 fit.write_pickle()
 
-#Use this code if you want to plot the output. You need the same SMILE output as before. 
+#Use this code if you want to plot the output. 
 
 #First, you need the pickled filename.
-filename = 'fit_image_n_5.0_SMILE_10_-30_0_Target_10_0_0_nxm_100_50_cmem_absolute_im2.pkl'
-analysis = CMEM_Image.visualise_image_fit.analyse_fit(smile, filename=filename, model='cmem')
+filename = 'fit_image_n_5.0_SMILE_10_-30_0_Target_10_0_0_nxm_100_50_cmem_absolute_im2_.pkl'
+analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=filename, model='cmem')
 
 #To plot the parameter and cost variation with iteration.
 analysis.plot_change_in_parameters(save=True)

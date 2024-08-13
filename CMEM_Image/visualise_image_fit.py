@@ -11,10 +11,10 @@ class analyse_fit():
 	'''This class will contain the plotting functions that 
 	the CMEM/visualise_models.py analysis class used.'''
 	
-	def __init__(self, smile, filename='fit_image_n_5.0_SMILE_-10_-30_0_Target_10_0_0_nxm_100_50_cmem_normalised_im2_.pkl', model='cmem'): 
-		'''This takes in the filename for the pickle file and the smile object.''' 
+	def __init__(self, filename='fit_image_n_5.0_SMILE_-10_-30_0_Target_10_0_0_nxm_100_50_cmem_normalised_im2_.pkl', model='cmem'): 
+		'''This takes in the filename for the pickle file.''' 
 		
-		self.smile = smile 
+		
 		self.current_model = model 
 		self.filename = filename
 		
@@ -54,7 +54,7 @@ class analyse_fit():
 
 		fig = plt.figure(figsize=(8,8))
 		fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.85)
-		fig.text(0.5, 0.9, "Parameter variation with optimisation\nn = {:.2f} cm".format(self.model['density'])+r"$^{-3}$"+", SMILE = ({},{},{}), Target = ({},{},{}), nxm = {}x{}".format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], self.smile.n_pixels, self.smile.m_pixels)+" \nOptimisation Time = {:.1f}s\nModel = {}".format(self.model['opt time'], self.image_tag.capitalize()), ha="center")
+		fig.text(0.5, 0.9, "Parameter variation with optimisation\nn = {:.2f} cm".format(self.model['density'])+r"$^{-3}$"+", SMILE = ({},{},{}), Target = ({},{},{}), nxm = {}x{}".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2], self.model['n_pixels'], self.model['m_pixels'])+" \nOptimisation Time = {:.1f}s\nModel = {}".format(self.model['opt time'], self.image_tag.capitalize()), ha="center")
 		ax1 = fig.add_subplot(321)
 		ax2 = fig.add_subplot(322)
 		ax2b = ax2.twinx()
@@ -193,14 +193,14 @@ class analyse_fit():
 		ax2 = fig.add_subplot(122)
 		
 		# Make pixel arrays for plotting. 
-		i_array = np.linspace(0,self.smile.n_pixels, self.smile.n_pixels+1)-0.5
-		j_array = np.linspace(0,self.smile.m_pixels, self.smile.m_pixels+1)-0.5
+		i_array = np.linspace(0,self.model['n_pixels'], self.model['n_pixels']+1)-0.5
+		j_array = np.linspace(0,self.model['m_pixels'], self.model['m_pixels']+1)-0.5
         
 		J, I = np.meshgrid(j_array, i_array)
         
         #Convert to degrees. 
-		theta_pixels = - (self.smile.theta_fov/2.) + (self.smile.theta_fov/self.smile.n_pixels)*(I+0.5)
-		phi_pixels = -(self.smile.phi_fov/2.) + (self.smile.phi_fov/self.smile.m_pixels)*(J+0.5)
+		theta_pixels = - (self.model['theta_fov']/2.) + (self.model['theta_fov']/self.model['n_pixels'])*(I+0.5)
+		phi_pixels = -(self.model['phi_fov']/2.) + (self.model['phi_fov']/self.model['m_pixels'])*(J+0.5)
         
         #Convert to degrees. Minus sign is so you look away from camera, not towards. 
 		theta_pixels = -np.rad2deg(theta_pixels)
@@ -210,7 +210,7 @@ class analyse_fit():
 		#levels = np.linspace(vmin, vmax, levels+1)
         
 		mesh1 = ax1.pcolormesh(phi_pixels, theta_pixels, self.model['ppmlr los intensity'], cmap=cmap, vmin=0, vmax=los_max)
-		ax1.set_title("PPMLR Image from SMILE\nSMILE = ({},{},{}), Target = ({},{},{})".format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]), fontsize=10)
+		ax1.set_title("PPMLR Image from SMILE\nSMILE = ({},{},{}), Target = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
 		ax1.set_xlabel('deg')
 		ax1.set_ylabel('deg')
 		ax1.set_aspect('equal')
@@ -219,7 +219,7 @@ class analyse_fit():
 		
 		#Now add the model image. 
 		mesh2 = ax2.pcolormesh(phi_pixels, theta_pixels, self.model['model los intensity'], cmap=cmap, vmin=0, vmax=los_max)
-		ax2.set_title("{} Image from SMILE\nSMILE = ({},{},{}), Target = ({},{},{})".format(self.image_tag, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]), fontsize=10)
+		ax2.set_title("{} Image from SMILE\nSMILE = ({},{},{}), Target = ({},{},{})".format(self.image_tag, self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
 		
 		ax2.set_xlabel('deg')
 		ax2.set_ylabel('deg')

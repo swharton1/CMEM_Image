@@ -396,7 +396,13 @@ class fit_image():
 						"pdyn":self.pdyn,
 						"pmag":self.pmag,
 						"dipole":self.dipole,
-						"init method":self.init_method
+						"init method":self.init_method,
+						"smile_loc":self.smile.smile_loc,
+						"target_loc":self.smile.target_loc,
+						"n_pixels":self.smile.n_pixels,
+						"m_pixels":self.smile.m_pixels,
+						"theta_fov":self.smile.theta_fov,
+						"phi_fov":self.smile.phi_fov,
 						}
         
 		with open(os.path.join(pickle_path, self.current_model+"_optimised", fname), "wb") as f:
