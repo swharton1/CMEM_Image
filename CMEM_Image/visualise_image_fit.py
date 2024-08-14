@@ -6,12 +6,13 @@ import pickle
 import os
 
 from . import get_names_and_units as gnau
+from . import boundary_emissivity_functions as bef
 
 class analyse_fit():
 	'''This class will contain the plotting functions that 
 	the CMEM/visualise_models.py analysis class used.'''
 	
-	def __init__(self, filename='fit_image_n_5.0_SMILE_-10_-30_0_Target_10_0_0_nxm_100_50_cmem_normalised_im2_.pkl', model='cmem'): 
+	def __init__(self, filename='fit_image_n_5.0_SMILE_10_-30_0_Target_10_0_0_nxm_100_50_cmem_absolute_im2_.pkl', model='cmem'): 
 		'''This takes in the filename for the pickle file.''' 
 		
 		
@@ -37,6 +38,57 @@ class analyse_fit():
 		self.parameter_names = [info[i][0] for i in info.keys()]
 		self.parameter_units = [info[i][1] for i in info.keys()]
 		
+		#Get magnetopause projection information. 
+		self.get_magnetopause_projection() 
+		
+	def get_magnetopause_projection(self):
+		'''This will do all the calculations for the optimised magnetopause in order to project it into an image.'''
+		
+		#Get model magnetopause positions. 
+		#Define ranges for theta and phi in degrees. 
+		theta = np.linspace(0,90,21)
+		phi = np.linspace(0,360,37)
+		
+		self.get_model_magnetopause(theta, phi) 
+		
+		#Get xyz coordinates of the magnetopause points. These are the 'magnetopause' vectors. 
+		self.mpx, self.mpy, self.mpz = self.convert_shue_to_xyz_coords(self.rmp, self.theta2d, self.phi2d)
+		
+		
+		#Get magnetopause unit vectors. 
+		self.mpx_unit = self.mpx/self.rmp
+		self.mpy_unit = self.mpy/self.rmp
+		self.mpz_unit = self.mpz/self.rmp 
+		
+		#Now get the magnetopause p vectors, from the point of view of smile. 
+		self.px = self.mpx - self.model['smile_loc'][0]
+		self.py = self.mpy - self.model['smile_loc'][1]
+		self.pz = self.mpz - self.model['smile_loc'][2] 
+		
+		#Get magnitude of these vectors. 
+		self.pmag = np.sqrt(self.px**2 + self.py**2 + self.pz**2) 
+		
+		#Get the unit p vectors. 
+		self.px_unit = self.px/self.pmag
+		self.py_unit = self.py/self.pmag
+		self.pz_unit = self.pz/self.pmag 
+		
+		#Now get the theta and phi of the unit p vectors. 
+		self.thetap = np.arccos(self.pz_unit)
+		self.phip = np.arccos(self.px_unit) 
+		
+		#Now get the difference in theta and the difference 
+		#in phi from the central look direction. 
+		#Also convert from radians to degrees. 
+		self.dthetap = np.rad2deg(self.model['sxi_theta'] - self.thetap)
+		self.dphip = np.rad2deg(self.model['sxi_phi'] - self.phip) 
+		
+		#Also get angle between r and p to determine how close to a tangent each point is. 
+		self.costangent = (self.mpx_unit*self.px_unit)+(self.mpy_unit*self.py_unit)+(self.mpz_unit*self.pz_unit) 
+		self.tangent = np.rad2deg(np.arccos(self.costangent)) 
+		
+	
+		
 	def __repr__(self):
 		return f"analyse model object."
     
@@ -46,6 +98,66 @@ class analyse_fit():
 		with open(filename, 'rb') as f: 
 			pickle_dict = pickle.load(f)
 		return pickle_dict
+	
+	def convert_shue_to_xyz_coords(self, r, theta, phi):
+		'''This will convert the Shue coordinates back to xyz coordinates. 
+        
+		Parameters
+		----------
+		r, theta (rad), phi (rad)
+        
+		Returns
+		-------
+		x,y,z
+		'''
+
+		x = r*np.cos(theta)
+		y = r*np.sin(theta)*np.cos(phi)
+		z = r*np.sin(theta)*np.sin(phi)
+
+		return x,y,z 
+	
+	def get_model_magnetopause(self, theta, phi): 
+		'''This will get the magnetopause function out of the optimised model. If it's 
+		'jorg', it returns a Shue model. If it's 'cmem', it returns a Lin model. 
+		
+		It also returns the subsolar magnetopause radius. 
+		
+		Parameters
+		----------
+		theta - 1D array for theta
+		phi - 1D array for phi 
+		
+		Returns
+		-------
+		rmp - 2D array of radial points for the magnetopause. 
+		rmp_sub - subsolar magnetopause distance.
+		
+		''' 
+		
+		theta = np.deg2rad(theta)
+		phi = np.deg2rad(phi) 
+		
+		#Create 2D arrays. 
+		self.theta2d, self.phi2d = np.meshgrid(theta, phi)
+		
+		if self.current_model == 'jorg':
+			
+			#Get the Jorgensen magnetopause for a range of theta and phi 
+			self.rmp = bef.shue_func(self.theta2d, self.phi2d, self.model['params best nm'][0], self.model['params best nm'][7], self.model['params best nm'][8])
+			
+		elif self.current_model == 'cmem':
+			
+			#Get Lin coefficients. 
+			lin_coeffs = bef.get_lin_coeffs(self.model['dipole'], self.model['pdyn'], self.model['pmag'], self.model['bz'])
+			
+			#Get Lin magnetopause for a range of theta and phi 
+			self.rmp = bef.lin_scaled_func(self.theta2d, self.phi2d, *lin_coeffs, p0=self.model['params best nm'][0], p1=self.model['params best nm'][7], p2=self.model['params best nm'][8], p3=self.model['params best nm'][9]) 
+			
+		#Get subsolar magnetopause (theta = 0 and phi = 0) 
+		sub_idx = np.where((self.theta2d == 0) & (self.phi2d == 0))
+		self.rmp_sub = self.rmp[sub_idx] 
+	
 	
 	
 	def plot_change_in_parameters(self, save=False, savetag=""):
@@ -179,12 +291,12 @@ class analyse_fit():
 		ax2.set_ylabel(self.parameter_units[2], fontsize=8)
        
 		if save: 
-			fig.savefig(self.plot_path+"fitted_images/{}_parameter_changes_{}.png".format(self.filename, savetag))
+			fig.savefig(self.plot_path+"fitted_images/{}_parameter_changes{}.png".format(self.filename, savetag))
 
 		self.fig_param = fig 
 
 
-	def plot_images(self, cmap='hot', vmin=-8, vmax=-4, levels=100, los_max=12, save=False, savetag=""):
+	def plot_images(self, cmap='hot', vmin=-8, vmax=-4, levels=100, los_max=12, save=False, savetag="", add_mp_projection=False):
 		'''This will plot the final model image alongside the PPMLR image.''' 
 		
 		fig = plt.figure(figsize=(8,5))
@@ -227,6 +339,35 @@ class analyse_fit():
 		cbar2 = plt.colorbar(mesh2, ax=ax2, shrink=0.8)
 		cbar2.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
 		
+		#Add a projection of the magnetopause here. Just as scatter for now.
+		#You only want the values inside the FOV. 
+		#fov_idx = np.where((self.dthetap > theta_pixels.min()) & (self.dthetap < theta_pixels.max()) & (self.dphip > phi_pixels.min()) & (self.dphip < phi_pixels.max())) 
+		#dthetap = self.dthetap[fov_idx]
+		#dphip = self.dphip[fov_idx] 
+		
+		#ax2.scatter(self.dphip, self.dthetap, c='w', s=5)
+		
+		if add_mp_projection:
+		
+			#Add lines going for each constant value of phi. 
+			for p in range(len(self.dphip)):
+				front = np.where(self.tangent[p] > 90)
+				ax2.plot(self.dphip[p][front], self.dthetap[p][front], c='w', lw=0.5)
+		
+			#Transpose arrays to plot cylindrical lines. 
+		
+			for t in range(len(self.dphip[0])):
+				front = np.where(self.tangent[:,t] > 90)
+				ax2.plot(self.dphip[:,t][front], self.dthetap[:,t][front], c='w', lw=0.5)
+		
+			#Make sure only FOV is shown, even if MP projection goes outside it. 
+			ax2.set_xlim(phi_pixels.min(), phi_pixels.max())
+			ax2.set_ylim(theta_pixels.min(), theta_pixels.max())
+		
+			#Add a label for the subsolar magnetopause radial position. 
+			fig.text(0.90, 0.2, r"$r_0$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
+		
+		
 		
 		# Add a label to show the model parameters. 
 		label = ""
@@ -239,12 +380,14 @@ class analyse_fit():
 		fig.text(0.5, 0.02, label, ha='center')
 		
 		if save: 
-			fig.savefig(self.plot_path+"fitted_images/{}_images_{}.png".format(self.filename, savetag))
+		
+			#Add tag if mp is added. 
+			mp_tag = 'mp' if add_mp_projection else ''
+			fig.savefig(self.plot_path+"fitted_images/{}_images_{}{}.png".format(self.filename, mp_tag, savetag))
 
 		self.fig_param = fig 
 		
-		
-		
+			
 		
 		
 	def sig_figs(self, x: float, precision: int):

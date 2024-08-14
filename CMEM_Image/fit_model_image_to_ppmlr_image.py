@@ -403,6 +403,8 @@ class fit_image():
 						"m_pixels":self.smile.m_pixels,
 						"theta_fov":self.smile.theta_fov,
 						"phi_fov":self.smile.phi_fov,
+						"sxi_theta":self.smile.sxi_theta,
+						"sxi_phi":self.smile.sxi_phi
 						}
         
 		with open(os.path.join(pickle_path, self.current_model+"_optimised", fname), "wb") as f:

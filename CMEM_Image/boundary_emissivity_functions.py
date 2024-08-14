@@ -26,7 +26,7 @@ def shue_func(theta, phi, r0, ay, az):
 
         return r 
         
-def lin_scaled_func(theta, phi, a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin, dipole=0, pd=2, pm=0.01, bz=-0.5, p0=1, p1=1, p2=1, p3=1):
+def lin_scaled_func(theta, phi, a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin, p0=1, p1=1, p2=1, p3=1):
         '''This function will work out r using the lin model. 
         
         Parameters
@@ -34,10 +34,10 @@ def lin_scaled_func(theta, phi, a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin, 
         theta (rad) - Shue coords.
         phi (rad) - Shue coords. 
         a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin - Lin coefficients in model. 
-        dipole - dipole tilt angle (rad)
-        pd - dynamic pressure in nPa
-        pm - magnetic pressure in nPa 
-        bz - IMF bz component in nT 
+        #dipole - dipole tilt angle (rad)
+        #pd - dynamic pressure in nPa
+        #pm - magnetic pressure in nPa 
+        #bz - IMF bz component in nT 
         p - parameter scaling factors. 
             p0 scales r0
             p1 scales flaring parameter beta 
@@ -46,8 +46,8 @@ def lin_scaled_func(theta, phi, a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin, 
             '''
 
         # Get coefficients if for some reason, they have not already been calculated. 
-        if r0_lin is None: 
-            get_lin_coeffs(dipole, pd, pm, bz)
+        #if r0_lin is None: 
+        #    get_lin_coeffs(dipole, pd, pm, bz)
         
         # Get phi-n and phi-s.
         phi_n = np.arccos((np.cos(theta)*np.cos(theta_n)) + (np.sin(theta)*np.sin(theta_n)*np.cos(phi-(np.pi/2.))))
@@ -178,7 +178,7 @@ def get_model_func(current_model):
 
                 # Calculate the radii to the magnetopause and bowshock for all 
                 # combinations of theta and phi. 
-                rmp = lin_scaled_func(theta, phi, a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin, 0, 2, 0.01, -0.5, p0, p1, p2, p3)
+                rmp = lin_scaled_func(theta, phi, a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin, p0, p1, p2, p3)
                 rbs = shue_func(theta, phi, bs, ay_bs, az_bs)
 
                 # Get indices inside MP, between MP and BS, and outside BS. 
