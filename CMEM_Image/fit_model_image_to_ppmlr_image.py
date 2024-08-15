@@ -345,7 +345,7 @@ class fit_image():
 		self.cost_per_iteration = np.array(self.cost_per_iteration)
 	
 		#Calculate the final los intensity. 
-		eta_model = self.get_eta_model(self.params_best_nm) 
+		self.eta_model = self.get_eta_model(self.params_best_nm) 
 		
 		#Then calculate the LOS intensity image. 
         #Calculate the LOS intensity. 
@@ -356,7 +356,7 @@ class fit_image():
 			for j in range(self.smile.m_pixels):
 			
 				#Added unit conversion factor from ev.RE to kev.cm
-				self.model_los_intensity[i][j] = ((1/(4*np.pi))*self.trapezium_rule(self.smile.p_spacing, eta_model[i][j]))*637100
+				self.model_los_intensity[i][j] = ((1/(4*np.pi))*self.trapezium_rule(self.smile.p_spacing, self.eta_model[i][j]))*637100
 				
 
 	def write_pickle(self, savetag=""):
@@ -369,7 +369,7 @@ class fit_image():
 		# Name and locate the pickle file. 
 		pickle_path = os.environ.get("PICKLE_PATH")
         
-		fname = "fit_image_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}_{}_{}_im{}_{}.pkl".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], self.smile.n_pixels, self.smile.m_pixels, self.current_model, self.cost_func, self.init_method, savetag)
+		fname = "fit_image_n_{}_SMILE_{:.2f}_{:.2f}_{:.2f}_Target_{}_{}_{}_nxm_{}_{}_{}_{}_im{}_{}.pkl".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], self.smile.n_pixels, self.smile.m_pixels, self.current_model, self.cost_func, self.init_method, savetag)
 
 		# Add all the desired information to a dictionary. 
 		pickle_dict = {
@@ -404,7 +404,11 @@ class fit_image():
 						"theta_fov":self.smile.theta_fov,
 						"phi_fov":self.smile.phi_fov,
 						"sxi_theta":self.smile.sxi_theta,
-						"sxi_phi":self.smile.sxi_phi
+						"sxi_phi":self.smile.sxi_phi,
+						"eta_model":self.eta_model,
+						"xpos":self.smile.xpos,
+						"ypos":self.smile.ypos,
+						"zpos":self.smile.zpos
 						}
         
 		with open(os.path.join(pickle_path, self.current_model+"_optimised", fname), "wb") as f:

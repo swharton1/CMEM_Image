@@ -12,7 +12,7 @@ class image_sim():
 	'''This is the object to simulate the image.''' 
 	
 	def __init__(self, smile, model="jorg", init_method=2, params0=None, temp=200000, density=5, vx=400, vy=0, vz=0, bx=0, by=0, bz=5, dipole=0): 
-		'''This takes in the ppmlr object and smile object and adds it to self.'''
+		'''This takes in the smile object and initial parameters and adds them to self.'''
 		
 		
 		self.smile = smile 

@@ -12,7 +12,7 @@ class analyse_fit():
 	'''This class will contain the plotting functions that 
 	the CMEM/visualise_models.py analysis class used.'''
 	
-	def __init__(self, filename='fit_image_n_5.0_SMILE_10_-30_0_Target_10_0_0_nxm_100_50_cmem_absolute_im2_.pkl', model='cmem'): 
+	def __init__(self, filename='fit_image_n_5.0_SMILE_10.00_-30.00_0.00_Target_10_0_0_nxm_100_50_cmem_absolute_im2_.pkl', model='cmem'): 
 		'''This takes in the filename for the pickle file.''' 
 		
 		
@@ -46,7 +46,7 @@ class analyse_fit():
 		
 		#Get model magnetopause positions. 
 		#Define ranges for theta and phi in degrees. 
-		theta = np.linspace(0,90,21)
+		theta = np.linspace(0,120,26)
 		phi = np.linspace(0,360,37)
 		
 		self.get_model_magnetopause(theta, phi) 
@@ -149,16 +149,36 @@ class analyse_fit():
 		elif self.current_model == 'cmem':
 			
 			#Get Lin coefficients. 
-			lin_coeffs = bef.get_lin_coeffs(self.model['dipole'], self.model['pdyn'], self.model['pmag'], self.model['bz'])
+			self.lin_coeffs = bef.get_lin_coeffs(self.model['dipole'], self.model['pdyn'], self.model['pmag'], self.model['bz'])
 			
 			#Get Lin magnetopause for a range of theta and phi 
-			self.rmp = bef.lin_scaled_func(self.theta2d, self.phi2d, *lin_coeffs, p0=self.model['params best nm'][0], p1=self.model['params best nm'][7], p2=self.model['params best nm'][8], p3=self.model['params best nm'][9]) 
+			self.rmp = bef.lin_scaled_func(self.theta2d, self.phi2d, *self.lin_coeffs, p0=self.model['params best nm'][0], p1=self.model['params best nm'][7], p2=self.model['params best nm'][8], p3=self.model['params best nm'][9]) 
 			
 		#Get subsolar magnetopause (theta = 0 and phi = 0) 
 		sub_idx = np.where((self.theta2d == 0) & (self.phi2d == 0))
 		self.rmp_sub = self.rmp[sub_idx] 
 	
+	#THIS IS WHERE WE CALCULATE THE OPTIMUM EMISSIVITY, AS IT'S NOT SAVED. 
 	
+#	def get_eta_model(self, params):
+#		'''This function calculates the eta model values for each iteration. This function is intended to be run from the cost function. 
+#		Parameters
+#		----------
+#		params - tuple of the model parameters for the chosen model. '''
+		
+		#Get the function to work out the emissivity. ('jorg' or 'cmem')  
+#		self.current_func = bef.get_model_func(self.current_model)
+		
+#		if self.current_model == "jorg": 
+#			eta_model = self.current_func(self.r, self.theta, self.phi, *params)
+#		elif self.current_model == "cmem":
+#			eta_model = self.current_func(self.r, self.theta, self.phi, *self.lin_coeffs, *params)
+#		else: 
+#			raise ValueError("{} not a valid model. 'jorg' or 'cmem' only atm.".format(self.current_model))
+		
+#		return eta_model
+		
+
 	
 	def plot_change_in_parameters(self, save=False, savetag=""):
 		'''This will plot how the parameters changed over the course of the
@@ -296,14 +316,39 @@ class analyse_fit():
 		self.fig_param = fig 
 
 
-	def plot_images(self, cmap='hot', vmin=-8, vmax=-4, levels=100, los_max=12, save=False, savetag="", add_mp_projection=False):
-		'''This will plot the final model image alongside the PPMLR image.''' 
+	def plot_images(self, cmap='hot', vmin=-8, vmax=-4, levels=100, los_max=12, save=False, savetag="", add_mp_projection=False, fname=None, ellipse=None, elev=45, azim=45, add_fov_projection=False, colour_cap=0):
+		'''This will plot the final model image alongside the PPMLR image.
 		
-		fig = plt.figure(figsize=(8,5))
-		fig.subplots_adjust(left=0.05, wspace=0.2, bottom=0.20) 
-		ax1 = fig.add_subplot(121) 
-		ax2 = fig.add_subplot(122)
+		Parameters
+		----------
+		cmap - def = 'hot'
+		vmin - redundant
+		vmax - redundant
+		levels - redundant
+		los_max - max LOS intensity to plot to.
+		save - boolean to save. def = False
+		savetag - option to add extra text to filename. 
+		add_mp_projection - boolean to add a projection of the magnetopause on. 
+		fname - filename to save the plot to. 
+		ellipse - ellipse object to add elliptical orbit to plot.
+		elev - elevation of 3d plot
+		azim - azimuth of 3d plot 
 		
+		''' 
+		
+		if add_fov_projection:
+			fig = plt.figure(figsize=(10,5))
+			fig.subplots_adjust(left=0.05, wspace=0.2, bottom=0.20) 
+			ax1 = fig.add_subplot(131) 
+			ax2 = fig.add_subplot(132)
+			ax3 = fig.add_subplot(133, projection='3d')
+		else:
+			fig = plt.figure(figsize=(8,5))
+			fig.subplots_adjust(left=0.10, wspace=0.5, bottom=0.20) 
+			ax1 = fig.add_subplot(121) 
+			ax2 = fig.add_subplot(122)
+			
+			
 		# Make pixel arrays for plotting. 
 		i_array = np.linspace(0,self.model['n_pixels'], self.model['n_pixels']+1)-0.5
 		j_array = np.linspace(0,self.model['m_pixels'], self.model['m_pixels']+1)-0.5
@@ -322,43 +367,46 @@ class analyse_fit():
 		#levels = np.linspace(vmin, vmax, levels+1)
         
 		mesh1 = ax1.pcolormesh(phi_pixels, theta_pixels, self.model['ppmlr los intensity'], cmap=cmap, vmin=0, vmax=los_max)
-		ax1.set_title("PPMLR Image from SMILE\nSMILE = ({},{},{}), Target = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+		if add_fov_projection:
+			ax1.set_title("PPMLR Image from SMILE\nn = {} cm".format(self.model['density'])+r"$^{-3}$", fontsize=10)
+		else:
+			ax1.set_title("PPMLR Image from SMILE\nSMILE = ({:.2f},{:.2f},{:.2f}), Target = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
 		ax1.set_xlabel('deg')
-		ax1.set_ylabel('deg')
+		if not add_fov_projection: ax1.set_ylabel('deg')
 		ax1.set_aspect('equal')
+		#if not add_fov_projection:
 		cbar1 = plt.colorbar(mesh1, ax=ax1, shrink=0.8)
-		cbar1.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
+		if not add_fov_projection:
+			cbar1.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
 		
 		#Now add the model image. 
 		mesh2 = ax2.pcolormesh(phi_pixels, theta_pixels, self.model['model los intensity'], cmap=cmap, vmin=0, vmax=los_max)
-		ax2.set_title("{} Image from SMILE\nSMILE = ({},{},{}), Target = ({},{},{})".format(self.image_tag, self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+		ax2.set_title("{} Image from SMILE".format(self.image_tag, fontsize=10))
 		
 		ax2.set_xlabel('deg')
-		ax2.set_ylabel('deg')
+		if not add_fov_projection: ax2.set_ylabel('deg')
 		ax2.set_aspect('equal')
 		cbar2 = plt.colorbar(mesh2, ax=ax2, shrink=0.8)
 		cbar2.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
 		
-		#Add a projection of the magnetopause here. Just as scatter for now.
-		#You only want the values inside the FOV. 
-		#fov_idx = np.where((self.dthetap > theta_pixels.min()) & (self.dthetap < theta_pixels.max()) & (self.dphip > phi_pixels.min()) & (self.dphip < phi_pixels.max())) 
-		#dthetap = self.dthetap[fov_idx]
-		#dphip = self.dphip[fov_idx] 
-		
+		#Add a projection of the magnetopause here. 
 		#ax2.scatter(self.dphip, self.dthetap, c='w', s=5)
-		
 		if add_mp_projection:
 		
 			#Add lines going for each constant value of phi. 
 			for p in range(len(self.dphip)):
 				front = np.where(self.tangent[p] > 90)
+				back = np.where(self.tangent[p] <= 90)
 				ax2.plot(self.dphip[p][front], self.dthetap[p][front], c='w', lw=0.5)
+				ax2.plot(self.dphip[p][back], self.dthetap[p][back], c='gray', lw=0.5)
 		
 			#Transpose arrays to plot cylindrical lines. 
 		
 			for t in range(len(self.dphip[0])):
 				front = np.where(self.tangent[:,t] > 90)
+				back = np.where(self.tangent[:,t] <= 90)
 				ax2.plot(self.dphip[:,t][front], self.dthetap[:,t][front], c='w', lw=0.5)
+				ax2.plot(self.dphip[:,t][back], self.dthetap[:,t][back], c='gray', lw=0.5)
 		
 			#Make sure only FOV is shown, even if MP projection goes outside it. 
 			ax2.set_xlim(phi_pixels.min(), phi_pixels.max())
@@ -367,7 +415,55 @@ class analyse_fit():
 			#Add a label for the subsolar magnetopause radial position. 
 			fig.text(0.90, 0.2, r"$r_0$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
 		
+		if add_fov_projection:
+			#Add the 3rd axis to show the projection angles better. 
+			#Add the emissivity along the LOS.
+			eta_model = self.model['eta_model']
+			
+			los_log = np.zeros(eta_model.shape)+vmin
+			i = np.where(eta_model > 0)
+			los_log[i] = np.log10(eta_model[i])
 		
+			#Only plot values above a certain emissivity. 
+			bright = np.where(los_log > vmin+colour_cap) 
+		
+			emit = ax3.scatter(self.model['xpos'][bright], self.model['ypos'][bright], self.model['zpos'][bright], c=los_log[bright], cmap="hot", s=0.001, alpha=0.2, vmin=vmin, vmax=vmax)
+			#cbar3 = plt.colorbar(emit, ax=ax3, shrink=0.8)
+		
+			#cticks = np.arange(vmin, vmax)
+			#cbar3.set_ticks(cticks)
+			#cbar3.set_ticklabels([r'$10^{'+str(i)+'}$' for i in cticks])
+			#cbar3.set_label('SWCX Emissivity (eV cm'+r'$^{-3}$ s'+r'$^{-1}$)') 
+        
+        	#Add FOV boundaries. 
+			self.add_fov_boundaries(ax3)
+        
+        	#Add the Earth on. 
+			self.add_earth(ax3) 
+		
+			#Add orbit ellipse if it is provided.
+			if ellipse is not None: 
+				ax3.plot(ellipse.x3/ellipse.RE, ellipse.y3/ellipse.RE, ellipse.z3/ellipse.RE, 'k')
+        
+			#Add on the Lin magnetopause from the optimised model. 
+			if add_mp_projection: 
+				
+				#Add lines going for each constant value of phi. 
+				for p in range(len(self.mpx)):
+					#out = np.where((self.dthetap[p] > theta_pixels.max()) | (self.dthetap[p] < theta_pixels.min()) | (self.dphip[p] > phi_pixels.max()) | (self.dphip[p] < phi_pixels.min()))
+					
+					ax3.plot(self.mpx[p], self.mpy[p], self.mpz[p], c='k', lw=0.5, zorder=0, alpha=0.2) 
+				for p in range(len(self.mpx[0])):
+					ax3.plot(self.mpx[:,p], self.mpy[:,p], self.mpz[:,p], c='k', lw=0.5, zorder=0, alpha=0.5) 
+			ax3.set_xlabel('x')
+			ax3.set_ylabel('y')
+			#ax3.set_zlabel('z')
+			ax3.set_xlim(-10,30)
+			ax3.set_ylim(-30,30)
+			ax3.set_zlim(-30,30)
+			ax3.set_title("SMILE = ({:.2f},{:.2f},{:.2f})\nTarget = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+			ax3.set_aspect('equal')
+			ax3.view_init(elev,azim) 
 		
 		# Add a label to show the model parameters. 
 		label = ""
@@ -381,14 +477,45 @@ class analyse_fit():
 		
 		if save: 
 		
-			#Add tag if mp is added. 
-			mp_tag = 'mp' if add_mp_projection else ''
-			fig.savefig(self.plot_path+"fitted_images/{}_images_{}{}.png".format(self.filename, mp_tag, savetag))
-
+			if fname is None:
+				#Add tag if mp is added. 
+				mp_tag = 'mp' if add_mp_projection else ''
+				fov_tag = 'fov' if add_fov_projection else ''
+				fig.savefig(self.plot_path+"fitted_images/{}_images_{}_{}{}.png".format(self.filename.split("_.pkl")[0], mp_tag, fov_tag, savetag))
+			else:
+				#You need the full path here. 
+				fig.savefig(self.plot_path+fname)
 		self.fig_param = fig 
 		
 			
+	def add_fov_boundaries(self, ax2):
+		'''This will add the FOV boundaries in black. '''
 		
+		#For corner pixels only. 
+		ax2.plot(self.model['xpos'][0][0], self.model['ypos'][0][0], self.model['zpos'][0][0], 'k', lw=0.5, zorder=3)
+		ax2.plot(self.model['xpos'][0][-1], self.model['ypos'][0][-1], self.model['zpos'][0][-1], 'k', lw=0.5, zorder=3)
+		ax2.plot(self.model['xpos'][-1][0], self.model['ypos'][-1][0], self.model['zpos'][-1][0], 'k', lw=0.5, zorder=3)
+		ax2.plot(self.model['xpos'][-1][-1], self.model['ypos'][-1][-1], self.model['zpos'][-1][-1], 'k', lw=0.5, zorder=3)
+		
+		#Join corners together. 
+		ax2.plot([self.model['xpos'][0][0][-1],self.model['xpos'][0][-1][-1]], [self.model['ypos'][0][0][-1],self.model['ypos'][0][-1][-1]], [self.model['zpos'][0][0][-1],self.model['zpos'][0][-1][-1]], 'k', lw=0.5, zorder=3)
+		ax2.plot([self.model['xpos'][0][-1][-1],self.model['xpos'][-1][-1][-1]], [self.model['ypos'][0][-1][-1],self.model['ypos'][-1][-1][-1]], [self.model['zpos'][0][-1][-1],self.model['zpos'][-1][-1][-1]], 'k', lw=0.5, zorder=3)
+		ax2.plot([self.model['xpos'][-1][-1][-1],self.model['xpos'][-1][0][-1]], [self.model['ypos'][-1][-1][-1],self.model['ypos'][-1][0][-1]], [self.model['zpos'][-1][-1][-1],self.model['zpos'][-1][0][-1]], 'k', lw=0.5, zorder=3)
+		ax2.plot([self.model['xpos'][-1][0][-1],self.model['xpos'][0][0][-1]], [self.model['ypos'][-1][0][-1],self.model['ypos'][0][0][-1]], [self.model['zpos'][-1][0][-1],self.model['zpos'][0][0][-1]], 'k', lw=0.5, zorder=3)
+		
+	def add_earth(self, ax):
+		'''This will add a sphere for the Earth. '''
+		
+		#Create a spherical surface. 
+		radius = 1
+		u = np.linspace(0, 2*np.pi, 100) 
+		v = np.linspace(0, np.pi, 100) 
+		x = radius* np.outer(np.cos(u), np.sin(v))
+		y = radius* np.outer(np.sin(u), np.sin(v))
+		z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+
+		ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
+			
 		
 	def sig_figs(self, x: float, precision: int):
 		"""

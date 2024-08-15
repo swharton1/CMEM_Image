@@ -130,8 +130,10 @@ def get_init_params(current_model, init_method, bz, pdyn, density, r0_lin=None):
 			# Get initial alpha values for Mp. 
 			#Bs values are Mp + 0.2. 
 			bs_alpha_i = get_initial_alpha(bz, pdyn) + 0.2
-				
-			params0 = (p0, bs, A1, A2, 2, 2.5, -1.6, 1, 3, 4, bs_alpha_i, bs_alpha_i)
+			
+			#Commented out line are the parameters used in the CMEM paper. 	
+			#params0 = (p0, bs, A1, A2, 2, 2.5, -1.6, 1, 3, 4, bs_alpha_i, bs_alpha_i)
+			params0 = (p0, bs, A1, A2, 2, 2.5, -1.6, 1, 6, 8, bs_alpha_i, bs_alpha_i)
 				
 	else:
 		raise ValueError("{} not a valid model. 'jorg' or 'cmem' only atm.".format(current_model))

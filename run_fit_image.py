@@ -19,7 +19,7 @@ fit.write_pickle()
 #Use this code if you want to plot the output. 
 
 #First, you need the pickled filename.
-filename = 'fit_image_n_5.0_SMILE_10_-30_0_Target_10_0_0_nxm_100_50_cmem_absolute_im2_.pkl'
+filename = 'fit_image_n_5.0_SMILE_10.00_-30.00_0.00_Target_10_0_0_nxm_100_50_cmem_absolute_im2_.pkl'
 analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=filename, model='cmem')
 
 #To plot the parameter and cost variation with iteration.

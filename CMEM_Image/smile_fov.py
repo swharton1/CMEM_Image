@@ -37,17 +37,18 @@ class smile_fov():
         self.sxi_theta = np.deg2rad(sxi_theta)
         self.sxi_phi = np.deg2rad(sxi_phi)
         self.smile_loc = np.array(smile_loc)
-        self.target_loc = np.array(target_loc) 
+        
         self.p_spacing = p_spacing
         self.p_max = p_max 
         
         # In the scenario where a target location has been given, 
         # calculate sxi_theta and sxi_phi. 
-        if self.target_loc is not None: 
+        if target_loc is not None: 
             
-            p = self.target_loc - self.smile_loc
+            p = target_loc - self.smile_loc
             self.sxi_theta = np.arccos(p[2]/((p[0]**2 + p[1]**2 + p[2]**2)**0.5))
             self.sxi_phi = np.arctan2(p[1], p[0])
+        self.target_loc = np.array(target_loc) 
         
         ts = process_time()
         print ("Get theta and phi for each pixel:")
@@ -180,6 +181,8 @@ class smile_fov():
 
         ax.view_init(elev,azim) 
     
+        self.fig = fig 
+    	
     def plot_LOS_vectors(self, elev=45, azim=45):
         '''This will plot the LOS vectors from the spacecraft position.'''
 
@@ -194,4 +197,23 @@ class smile_fov():
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
+        
+        self.add_earth(ax)
+        ax.set_aspect('equal') 
+        
         ax.view_init(elev,azim) 
+        
+        self.fig2 = fig
+       
+    def add_earth(self, ax):
+        '''This will add a sphere for the Earth. '''
+		
+        #Create a spherical surface. 
+        radius = 1
+        u = np.linspace(0, 2*np.pi, 100) 
+        v = np.linspace(0, np.pi, 100) 
+        x = radius* np.outer(np.cos(u), np.sin(v)) 
+        y = radius* np.outer(np.sin(u), np.sin(v))
+        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+        
+        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
