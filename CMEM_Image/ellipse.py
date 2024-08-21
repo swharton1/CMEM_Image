@@ -49,7 +49,10 @@ class ellipse():
 		mu = 6.67e-11 * 6e24 
 		
 		#Calculate semi-major axis. 
-		a = self.p/(1 - self.e**2) 
+		self.a = self.p/(1 - self.e**2)
+		
+		#Calculate semi-minor axis. 
+		self.b = self.a*((1 - self.e**2)**0.5) 
 		
 		#Calculate radius of satellite in m. 
 		self.r = self.p/(1 + self.e*np.cos(self.nu)) 
@@ -57,8 +60,11 @@ class ellipse():
 		#Calculate specific angular momentum of satellite. 
 		self.h = np.sqrt(mu*self.p) 
 		
+		#Calculate period of satellite. 
+		self.period = 2*np.pi*self.a*self.b/self.h 
+		
 		#Calculate speed of satellite in m/s. 
-		self.v = np.sqrt(mu*(2/self.r - 1/a))
+		self.v = np.sqrt(mu*(2/self.r - 1/self.a))
 		
 		#Calculate the flight path angle. 
 		#cos_fpa = self.h/(self.r*self.v)
@@ -139,13 +145,48 @@ class ellipse():
 		omega = np.rad2deg(np.arccos(cosomega))
 		print ('Arg. Perigee = ', omega) 
 		
+	def calc_time(self):
+		'''This will calculate the time since periapsis for a given true anomaly.
 		
+		It will use a simple numerical method to perform the integration. Currently, 
+		it just uses the spacing of the true anomaly array.'''
 		
+		#Split the main bracket into two terms for ease of calculation. 
+		#self.term1 = (self.e*np.sin(self.nu))/((self.e**2-1)*(self.e*np.cos(self.nu)+1))	
+		
+		#self.arg_arctanh = ((self.e-1)*np.tan(self.nu/2))/((self.e**2 -1)**0.5)
+		#self.term2 = (2*np.arctanh(self.arg_arctanh))/((self.e**2 - 1)**1.5)
+		
+		#Calculate p^2/h
+		self.coeff = self.p**2/self.h
+		
+		self.t = np.zeros(self.nu.size) 
+		
+		#Calculate 1/(1+ecos(nu))^2
+		self.nu_func = 1/(1 + self.e*np.cos(self.nu))**2
+		
+		for t in range(len(self.t)):
+			if t == 0:
+				print (self.nu_func[0])
+				self.t[t] = 0
+			
+			else:
+				self.integral = self.trapezium_rule(self.nu[1]-self.nu[0], self.nu_func[0:t+1])
+				self.t[t] = self.coeff*self.integral 
+		
+		#Now calculate the time in seconds. 
+		#self.t = self.coeff*self.integral 
+	
+	def trapezium_rule(self, nu_spacing, nu_func):
+		'''This will integrate a function using the trapezium rule. '''
+		
+		return (nu_spacing/2)*(nu_func[0] + nu_func[-1] + 2*sum(nu_func[1:-1]))
+    	
 	def plot_ellipse(self, lims=(-10,10), elev=45, azim=45):
 		'''This plots the ellipse in 3D space.'''
 		
 		fig = plt.figure(figsize=(6,8))
-		ax1 = fig.add_subplot(111, projection='3d')
+		ax1 = fig.add_subplot(311, projection='3d')
 		
 		#Original ellipse
 		#ax1.plot(self.x0/self.RE, self.y0/self.RE, self.z0/self.RE, 'b')
@@ -209,16 +250,19 @@ class ellipse():
 		ax1.view_init(elev,azim) 
 		
 		#Add another plot to show the variation of radial distance and velocity with true anomaly. 
-		#ax2 = fig.add_subplot(412)
-		#ax2.plot(np.rad2deg(self.nu), self.r/self.RE, 'k')
-		#ax2.set_ylabel('Radius of Orbit (RE)') 
-		#ax2.set_xlabel('True Anomaly (deg)')
+		ax2 = fig.add_subplot(312)
+		ax2.plot(np.rad2deg(self.nu), (self.r/self.RE), 'k')
+		ax2.set_ylabel('Radius of Orbit (RE)') 
+		ax2.set_xlabel('True Anomaly (deg)')
 		
-		#ax3 = fig.add_subplot(413)
-		#ax3.plot(np.rad2deg(self.nu), self.v/1000, 'k')
-		#ax3.set_ylabel('Speed of Orbit (km/s)') 
-		#ax3.set_xlabel('True Anomaly (deg)')
+		ax3 = fig.add_subplot(313)
+		ax3.plot(np.rad2deg(self.nu), self.t/3600, 'k')
+		ax3.set_ylabel('Time (s)') 
+		ax3.set_xlabel('True Anomaly (deg)')
 		
+		#Add period on. 
+		ax3.plot([0,360], [self.period/3600, self.period/3600], 'k--', label="T={:.1f}hrs".format(self.period/3600))
+		ax3.legend(loc='best')
 		#ax3 = fig.add_subplot(414)
 		#ax3.plot(np.rad2deg(self.nu), np.rad2deg(self.phi), 'k')
 		#ax3.set_ylabel('Flight Path Angle (deg)') 

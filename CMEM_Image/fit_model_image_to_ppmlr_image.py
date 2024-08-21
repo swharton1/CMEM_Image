@@ -253,7 +253,7 @@ class fit_image():
 	def trapezium_rule(self, p_spacing, eta_LOS):
 		'''This will integrate a function using the trapezium rule. '''
 
-		return (p_spacing/2)*(eta_LOS[0] + eta_LOS[-1] + 2*sum(eta_LOS[1:-2]))
+		return (p_spacing/2)*(eta_LOS[0] + eta_LOS[-1] + 2*sum(eta_LOS[1:-1]))
    
 	#FITTING THE MODEL TO THE DATA
 	##############################
