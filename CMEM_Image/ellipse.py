@@ -7,6 +7,7 @@ import os
 from spacepy import coordinates as coord
 from spacepy.time import Ticktock 
 import datetime as dt
+from matplotlib.patches import Wedge, Polygon, Circle
 
 class ellipse():
 	'''This will make an object to describe an ellipse. '''
@@ -153,6 +154,8 @@ class ellipse():
 		
 		#Calculate the time since perigee. 
 		self.calc_time() 
+		self.get_datetime_from_periapsis()
+		self.gse_to_gsm()
 		
 	def calc_time(self):
 		'''This will calculate the time since periapsis for a given true anomaly.
@@ -199,8 +202,7 @@ class ellipse():
 		for t in range(len(self.t)):
 			deltat = dt.timedelta(seconds=self.t[t]) 
 			self.dt_list.append(self.ptime+deltat) 
-    	
-		print (self.dt_list)	
+    		
     
 	def gse_to_gsm(self):
 		'''This will use spacepy to convert from GSE to GSM'''
@@ -224,11 +226,13 @@ class ellipse():
 		self.y_gsm = self.coords_gsm.y
 		self.z_gsm = self.coords_gsm.z 
     	
-	def plot_ellipse(self, lims=(-10,10), elev=45, azim=45):
+	def plot_ellipse_3d(self, lims=(-20,20), elev=45, azim=45):
 		'''This plots the ellipse in 3D space.'''
 		
-		fig = plt.figure(figsize=(6,8))
-		ax1 = fig.add_subplot(311, projection='3d')
+		fig = plt.figure(figsize=(8,6))
+		ax1 = fig.add_subplot(121, projection='3d')
+		
+		#GSE coordinates. 
 		
 		#Original ellipse
 		#ax1.plot(self.x0/self.RE, self.y0/self.RE, self.z0/self.RE, 'b')
@@ -259,13 +263,11 @@ class ellipse():
 		#Add other r vector. 
 		#ax1.plot([0,self.x3[90]/self.RE], [0, self.y3[90]/self.RE], [0, self.z3[90]/self.RE], 'k')
 		#Add normal unit vector. 
-		ax1.plot([0,self.n_unit_vector[0]*5], [0, self.n_unit_vector[1]*5], [0, self.n_unit_vector[2]*5], 'b')
+		#ax1.plot([0,self.n_unit_vector[0]*5], [0, self.n_unit_vector[1]*5], [0, self.n_unit_vector[2]*5], 'b')
 		
 		#Add line of nodes. 
-		ax1.plot([0, 5*self.nodes[0]], [0, 5*self.nodes[1]], [0, 5*self.nodes[2]], 'g')
+		#ax1.plot([0, 5*self.nodes[0]], [0, 5*self.nodes[1]], [0, 5*self.nodes[2]], 'g')
 		
-		#Add GSM position to main graph. 
-		ax1.plot(self.x_gsm/self.RE, self.y_gsm/self.RE, self.z_gsm/self.RE, 'b')
 		
 		#Add I vector. 
 		#ax1.plot([0, 20*self.I[0]], [0, 20*self.I[1]], [0, 20*self.I[2]], 'r')
@@ -275,15 +277,15 @@ class ellipse():
 		#	if i%5==0:
 		#		ax1.plot([self.x3[i]/self.RE, (self.x3[i]/self.RE+5*self.v_unit_vector[i][0])], [self.y3[i]/self.RE, (self.y3[i]/self.RE+5*self.v_unit_vector[i][1])], [self.z3[i]/self.RE, (self.z3[i]/self.RE+5*self.v_unit_vector[i][2])], 'r')
 		
-		ax1.set_xlabel('x')
-		ax1.set_ylabel('y')
-		ax1.set_zlabel('z')
+		ax1.set_xlabel(r'$x_{GSE}$')
+		ax1.set_ylabel(r'$y_{GSE}$')
+		ax1.set_zlabel(r'$z_{GSE}$')
+		ax1.set_title('Orbit in GSE')
 		
 		#Add axes into plot.  
 		ax1.plot(lims, (0,0), (0,0), 'k')
 		ax1.plot((0,0), lims, (0,0), 'k')
 		ax1.plot((0,0), (0,0), lims, 'k')
-		
 		
 		ax1.set_xlim(lims)
 		ax1.set_ylim(lims)
@@ -294,27 +296,168 @@ class ellipse():
 		
 		ax1.view_init(elev,azim) 
 		
-		#Add another plot to show the variation of radial distance and velocity with true anomaly. 
-		ax2 = fig.add_subplot(312)
-		ax2.plot(np.rad2deg(self.nu), (self.r/self.RE), 'k')
-		ax2.set_ylabel('Radius of Orbit (RE)') 
-		ax2.set_xlabel('True Anomaly (deg)')
+		#Add GSM position to main graph. 
+		ax2 = fig.add_subplot(122, projection='3d')
 		
-		ax3 = fig.add_subplot(313)
-		ax3.plot(np.rad2deg(self.nu), self.t/3600, 'k')
-		ax3.set_ylabel('Time (s)') 
-		ax3.set_xlabel('True Anomaly (deg)')
+		zpos = np.where(self.z_gsm >=0)
+		zneg = np.where(self.z_gsm < 0)
+		ax2.plot(self.x_gsm[zpos]/self.RE, self.y_gsm[zpos]/self.RE, self.z_gsm[zpos]/self.RE, 'k')
+		ax2.plot(self.x_gsm[zneg]/self.RE, self.y_gsm[zneg]/self.RE, self.z_gsm[zneg]/self.RE, 'gray')
+		
+		#Add periapsis vector after RAAN. 
+		ax2.plot([0,self.x_gsm[0]/self.RE], [0, self.y_gsm[0]/self.RE], [0, self.z_gsm[0]/self.RE], 'k')
+		
+		ax2.set_xlabel(r'$x_{GSM}$')
+		ax2.set_ylabel(r'$y_{GSM}$')
+		ax2.set_zlabel(r'$z_{GSM}$')
+		ax2.set_title('Orbit in GSM')
+		
+		#Add axes into plot.  
+		ax2.plot(lims, (0,0), (0,0), 'k')
+		ax2.plot((0,0), lims, (0,0), 'k')
+		ax2.plot((0,0), (0,0), lims, 'k')
+		
+		ax2.set_xlim(lims)
+		ax2.set_ylim(lims)
+		ax2.set_zlim(lims)
+		ax2.set_aspect('equal')
+		
+		self.add_earth(ax2)
+		
+		ax2.view_init(elev,azim) 
+		
+		fig.savefig(self.plot_path+"example_ellipses_3d.png") 
+	
+	def plot_ellipse_2d(self):
+		'''This will plot the xy and xz planes of the orbit in GSE and GSM. '''
+		
+		fig = plt.figure(figsize=(6,6))
+		
+		#GSE
+		ax1 = fig.add_subplot(221)
+		ax1.plot(self.x_gse[0:180]/self.RE, self.z_gse[0:180]/self.RE, 'cyan')
+		ax1.plot(self.x_gse[180:]/self.RE, self.z_gse[180:]/self.RE, 'darkblue')
+		ax1.set_xlabel(r'$x_{GSE}$')
+		ax1.set_ylabel(r'$z_{GSE}$') 
+		ax1.set_title('Orbit in GSE')
+		self.make_earth_2d(ax1, rotation=-90)
+		ax1.set_aspect('equal')
+		
+		ax2 = fig.add_subplot(223)
+		ax2.plot(self.x_gse[0:180]/self.RE, self.y_gse[0:180]/self.RE, 'cyan')
+		ax2.plot(self.x_gse[180:]/self.RE, self.y_gse[180:]/self.RE, 'darkblue')
+		ax2.set_xlabel(r'$x_{GSE}$')
+		ax2.set_ylabel(r'$y_{GSE}$') 
+		#ax2.set_title('Orbit in GSE')
+		self.make_earth_2d(ax2, rotation=-90)
+		ax2.set_aspect('equal')
+		
+		ax3 = fig.add_subplot(222)
+		ax3.plot(self.x_gsm[0:180]/self.RE, self.z_gsm[0:180]/self.RE, 'cyan')
+		ax3.plot(self.x_gsm[180:]/self.RE, self.z_gsm[180:]/self.RE, 'darkblue')
+		ax3.set_xlabel(r'$x_{GSM}$')
+		ax3.set_ylabel(r'$z_{GSM}$') 
+		ax3.set_title('Orbit in GSM')
+		self.make_earth_2d(ax3, rotation=-90)
+		ax3.set_aspect('equal')
+		
+		ax4 = fig.add_subplot(224)
+		ax4.plot(self.x_gsm[0:180]/self.RE, self.y_gsm[0:180]/self.RE, 'cyan')
+		ax4.plot(self.x_gsm[180:]/self.RE, self.y_gsm[180:]/self.RE, 'darkblue')
+		
+		ax4.set_xlabel(r'$x_{GSM}$')
+		ax4.set_ylabel(r'$y_{GSM}$') 
+		#ax4.set_title('Orbit in GSM')
+		self.make_earth_2d(ax4, rotation=-90)
+		ax4.set_aspect('equal')
+		
+		fig.text(0.95, 0.05, 'Outbound', color='cyan', fontsize=8, ha='right')
+		fig.text(0.95, 0.03, 'Inbound', color='darkblue', fontsize=8, ha='right')
+		
+		fig.savefig(self.plot_path+'example_ellipses_2d.png')
+		
+	def plot_orbital_parameters(self, t=False):
+		'''This will plot how various parameters change with true anomaly.
+		
+		Parameters
+		----------
+		t - Boolean to plot as a function of time instead of true anomaly. '''
+		
+		nu_ticks = np.linspace(0,360,13)
+		#t_ticks = np.linspace(0,self.period/3600,13)
+		
+		fig = plt.figure(figsize=(6,8))
+		#fig.subplots_adjust(hspace=0.5)
+		
+		#Radial position (RE)
+		ax1 = fig.add_subplot(411)
+		if t: 
+			ax1.plot(self.t/3600, (self.r/self.RE), 'k')
+			ax1.set_xlim(self.t[0]/3600, self.t[-1]/3600)
+			
+		else:
+			ax1.plot(np.rad2deg(self.nu), (self.r/self.RE), 'k')
+			ax1.set_xticks(nu_ticks)
+			ax1.set_xlim(0,360)
+		ax1.set_ylabel('Radius of Orbit (RE)') 
+		ax1.grid()
+		ax1.set_title('Orbital Parameters') 
+		ax1.set_ylim(0,)
+		
+		#Speed (km/s)
+		ax2 = fig.add_subplot(412)
+		if t:
+			ax2.plot(self.t/3600, self.v/1000, 'k')
+			ax2.set_xlim(self.t[0]/3600, self.t[-1]/3600)
+		else:
+			ax2.plot(np.rad2deg(self.nu), self.v/1000, 'k')
+			ax2.set_xticks(nu_ticks)
+			ax2.set_xlim(0,360)
+		ax2.set_ylabel('Speed (km/s)')
+		ax2.grid()
+		ax2.set_ylim(0,)
+		
+		#Time since periapsis (hr)
+		ax3 = fig.add_subplot(413)
+		if t:
+			ax3.plot(self.t/3600, self.t/3600, 'k')
+			ax3.set_xlim(self.t[0]/3600, self.t[-1]/3600)
+			ax3.plot([self.t[0]/3600, self.t[-1]/3600], [self.period/3600, self.period/3600], 'k--', label="T={:.1f}hrs".format(self.period/3600))
+		else:
+			ax3.plot(np.rad2deg(self.nu), self.t/3600, 'k')
+			ax3.set_xticks(nu_ticks)
+			ax3.set_xlim(0,360)
+			ax3.plot([0,360], [self.period/3600, self.period/3600], 'k--', label="T={:.1f}hrs".format(self.period/3600))
+			
+		ax3.set_ylabel('Time since \nPeriapsis (hrs)') 
+		ax3.set_ylim(0,)
 		
 		#Add period on. 
-		ax3.plot([0,360], [self.period/3600, self.period/3600], 'k--', label="T={:.1f}hrs".format(self.period/3600))
 		ax3.legend(loc='best')
-		#ax3 = fig.add_subplot(414)
-		#ax3.plot(np.rad2deg(self.nu), np.rad2deg(self.phi), 'k')
-		#ax3.set_ylabel('Flight Path Angle (deg)') 
-		#ax3.set_xlabel('True Anomaly (deg)')
+		ax3.grid()
 		
 		
-		fig.savefig(self.plot_path+"example.png") 
+		#Flight path angle (deg). 
+		ax4 = fig.add_subplot(414)
+		if t:
+			ax4.plot(self.t/3600, np.rad2deg(self.phi), 'k')
+			ax4.set_xlim(self.t[0]/3600, self.t[-1]/3600)
+			t_labels = ['{}\n{:.2f}'.format(tick, tick/(self.period/3600)) for tick in ax4.get_xticks()]
+			ax4.set_xticklabels(t_labels)
+			ax4.set_xlabel('Time (hrs:Period)')
+		else:
+			ax4.plot(np.rad2deg(self.nu), np.rad2deg(self.phi), 'k')
+			ax4.set_xticks(nu_ticks)
+			ax4.set_xlim(0,360)
+			ax4.set_xlabel('True Anomaly (deg)') 
+		ax4.set_ylabel('Flight Path \nAngle (deg)') 
+		
+		ax4.grid()
+		
+		if t:
+			fig.savefig(self.plot_path+"example_orbital_params_t.png") 
+		else:
+			fig.savefig(self.plot_path+"example_orbital_params_nu.png") 
 		
 	def add_earth(self, ax):
 		'''This will add a sphere for the Earth. '''
@@ -329,4 +472,19 @@ class ellipse():
 
 		ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
 		
+	def make_earth_2d(self, ax, rotation=0):
+		'''This will add a little plot of the Earth on top for reference. '''
+
+		# Add white circle first. 
+		r=1
+		circle = Circle((0,0), r, facecolor='w', edgecolor='navy')
+		ax.add_patch(circle)
+
+		# Add nightside. 
+		theta2 = np.arange(181)-180+rotation
+		xval2 = np.append(r*np.cos(theta2*(np.pi/180)),0)
+		yval2 = np.append(r*np.sin(theta2*(np.pi/180)),0)
+		verts2 = [[xval2[i],yval2[i]] for i in range(len(xval2))]
 		
+		polygon2 = Polygon(verts2, closed=True, edgecolor='navy', facecolor='navy', alpha=1) 
+		ax.add_patch(polygon2)	
