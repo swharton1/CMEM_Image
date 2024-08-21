@@ -4,10 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import os
 
+from spacepy import coordinates as coord
+from spacepy.time import Ticktock 
+import datetime as dt
+
 class ellipse():
 	'''This will make an object to describe an ellipse. '''
 	
-	def __init__(self, nu, ra=19, rp=2, inc=70, raan=80, omega=300):
+	def __init__(self, nu, ra=19, rp=2, inc=70, raan=80, omega=300, ptime=dt.datetime(2024,8,10)):
 		'''This takes in the six parameters to describe the orbit. 
 		
 		Parameters
@@ -20,10 +24,12 @@ class ellipse():
 		raan - right angle of ascending node (RAAN) (deg)
 		omega - argument of periapsis (deg)
 		nu - true anomaly (deg) - Should be an array from 0 to 359 degrees. 
+		ptime - periapsis time as a datetime object. 
 		
 		'''
 		
 		self.RE = 6370000
+		self.ptime = ptime
 		
 		#Calculate eccentricity and semiparameter. 
 		self.rp = rp*self.RE
@@ -97,15 +103,15 @@ class ellipse():
 		self.z2 = self.y1*np.sin(self.inc) + self.z1*np.cos(self.inc) 
 		
 		#Rotate ellipse around z axis by RAAN. 
-		self.x3 = self.x2*np.cos(self.raan) - self.y2*np.sin(self.raan)
-		self.y3 = self.x2*np.sin(self.raan) + self.y2*np.cos(self.raan) 
-		self.z3 = self.z2 
+		self.x_gse = self.x2*np.cos(self.raan) - self.y2*np.sin(self.raan)
+		self.y_gse = self.x2*np.sin(self.raan) + self.y2*np.cos(self.raan) 
+		self.z_gse = self.z2 
 		
 		#Create radius vectors. 
-		self.r_vector = np.array((self.x3, self.y3, self.z3)).T 
+		self.r_vector = np.array((self.x_gse, self.y_gse, self.z_gse)).T 
 		
 		#Get magnitude of new radius vectors. Should be same as r. 
-		self.r_mag = np.sqrt(self.x3**2 + self.y3**2 + self.z3**2)
+		self.r_mag = np.sqrt(self.x_gse**2 + self.y_gse**2 + self.z_gse**2)
 		
 		#Get r unit vector. 
 		self.r_unit_vector = np.array([self.r_vector[i]/self.r_mag[i] for i in range(self.r_mag.size)])
@@ -145,6 +151,9 @@ class ellipse():
 		omega = np.rad2deg(np.arccos(cosomega))
 		print ('Arg. Perigee = ', omega) 
 		
+		#Calculate the time since perigee. 
+		self.calc_time() 
+		
 	def calc_time(self):
 		'''This will calculate the time since periapsis for a given true anomaly.
 		
@@ -181,6 +190,39 @@ class ellipse():
 		'''This will integrate a function using the trapezium rule. '''
 		
 		return (nu_spacing/2)*(nu_func[0] + nu_func[-1] + 2*sum(nu_func[1:-1]))
+		
+	def get_datetime_from_periapsis(self):
+		'''This will work out a datetime object for each point around the orbit by adding the time to the datetime object of the periapsis point.'''
+    	
+		self.dt_list = []
+    	
+		for t in range(len(self.t)):
+			deltat = dt.timedelta(seconds=self.t[t]) 
+			self.dt_list.append(self.ptime+deltat) 
+    	
+		print (self.dt_list)	
+    
+	def gse_to_gsm(self):
+		'''This will use spacepy to convert from GSE to GSM'''
+		
+		#Need coordinates in appropriate form for conversion. 
+		self.coords_gse = np.zeros((self.x_gse.size,3))
+		self.coords_gse[:,0] = self.x_gse
+		self.coords_gse[:,1] = self.y_gse
+		self.coords_gse[:,2] = self.z_gse 
+    	
+		#Needs to take data in a a list of xyz points. 
+		coord_obj = coord.Coords(self.coords_gse, 'GSE', 'car')
+    	
+		#Add time information. 
+		#t = dt.datetime(self.dt_list)
+		coord_obj.ticks = Ticktock(self.dt_list, 'UTC') 
+    	
+		#To convert to GSM. 
+		self.coords_gsm = coord_obj.convert('GSM', 'car') 
+		self.x_gsm = self.coords_gsm.x
+		self.y_gsm = self.coords_gsm.y
+		self.z_gsm = self.coords_gsm.z 
     	
 	def plot_ellipse(self, lims=(-10,10), elev=45, azim=45):
 		'''This plots the ellipse in 3D space.'''
@@ -206,14 +248,14 @@ class ellipse():
 		#Add periapsis vector after inclination. 
 		#ax1.plot([0,self.x2[0]/self.RE], [0, self.y2[0]/self.RE], [0, self.z2[0]/self.RE], 'g')
 		
-		#Rotated by RAAN. 
-		zpos = np.where(self.z3 >=0)
-		zneg = np.where(self.z3 < 0)
-		ax1.plot(self.x3[zpos]/self.RE, self.y3[zpos]/self.RE, self.z3[zpos]/self.RE, 'k')
-		ax1.plot(self.x3[zneg]/self.RE, self.y3[zneg]/self.RE, self.z3[zneg]/self.RE, 'gray')
+		#Rotated by RAAN. FINAL GSE. 
+		zpos = np.where(self.z_gse >=0)
+		zneg = np.where(self.z_gse < 0)
+		ax1.plot(self.x_gse[zpos]/self.RE, self.y_gse[zpos]/self.RE, self.z_gse[zpos]/self.RE, 'k')
+		ax1.plot(self.x_gse[zneg]/self.RE, self.y_gse[zneg]/self.RE, self.z_gse[zneg]/self.RE, 'gray')
 		
 		#Add periapsis vector after RAAN. 
-		ax1.plot([0,self.x3[0]/self.RE], [0, self.y3[0]/self.RE], [0, self.z3[0]/self.RE], 'k')
+		ax1.plot([0,self.x_gse[0]/self.RE], [0, self.y_gse[0]/self.RE], [0, self.z_gse[0]/self.RE], 'k')
 		#Add other r vector. 
 		#ax1.plot([0,self.x3[90]/self.RE], [0, self.y3[90]/self.RE], [0, self.z3[90]/self.RE], 'k')
 		#Add normal unit vector. 
@@ -221,6 +263,9 @@ class ellipse():
 		
 		#Add line of nodes. 
 		ax1.plot([0, 5*self.nodes[0]], [0, 5*self.nodes[1]], [0, 5*self.nodes[2]], 'g')
+		
+		#Add GSM position to main graph. 
+		ax1.plot(self.x_gsm/self.RE, self.y_gsm/self.RE, self.z_gsm/self.RE, 'b')
 		
 		#Add I vector. 
 		#ax1.plot([0, 20*self.I[0]], [0, 20*self.I[1]], [0, 20*self.I[2]], 'r')
