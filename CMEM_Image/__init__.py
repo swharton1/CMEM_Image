@@ -6,6 +6,7 @@ from . import get_names_and_units
 from . import set_initial_params
 from . import ppmlr_image
 from . import ellipse
+from . import ellipse2
 from . import fit_model_image_to_ppmlr_image
 from . import visualise_image_fit 
 
