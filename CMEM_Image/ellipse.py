@@ -53,7 +53,7 @@ class ellipse():
 		self.nu = np.deg2rad(nu) 
 		
 		#Store mu value for Earth. 
-		mu = 6.67e-11 * 6e24 
+		self.mu = 6.67e-11 * 6e24 
 		
 		#Calculate semi-major axis. 
 		self.a = self.p/(1 - self.e**2)
@@ -61,17 +61,20 @@ class ellipse():
 		#Calculate semi-minor axis. 
 		self.b = self.a*((1 - self.e**2)**0.5) 
 		
+		#Calculate periapsis. 
+		self.periapsis = self.p/(1+self.e)
+		
 		#Calculate radius of satellite in m. 
 		self.r = self.p/(1 + self.e*np.cos(self.nu)) 
 		
 		#Calculate specific angular momentum of satellite. 
-		self.h = np.sqrt(mu*self.p) 
+		self.h = np.sqrt(self.mu*self.p) 
 		
 		#Calculate period of satellite. 
 		self.period = 2*np.pi*self.a*self.b/self.h 
 		
 		#Calculate speed of satellite in m/s. 
-		self.v = np.sqrt(mu*(2/self.r - 1/self.a))
+		self.v = np.sqrt(self.mu*(2/self.r - 1/self.a))
 		
 		#Calculate the flight path angle. 
 		#cos_fpa = self.h/(self.r*self.v)
@@ -80,6 +83,17 @@ class ellipse():
 		self.phi = np.zeros((self.r.size))
 		self.phi[self.nu < np.pi] = np.arccos(self.h/(self.r[self.nu < np.pi]*self.v[self.nu < np.pi]))
 		self.phi[self.nu >= np.pi] = -np.arccos(self.h/(self.r[self.nu >= np.pi]*self.v[self.nu >= np.pi]))
+		
+		#Calculate Eccentric Anomaly. 
+		#self.EA = np.arccos((self.e + np.cos(self.nu))/(1 + self.e*np.cos(self.nu)))
+		self.EA = np.arctan2(np.sin(self.nu)*(1-self.e**2)**0.5,self.e + np.cos(self.nu))
+		
+		#Need to adjust for values where nu > np.pi. 
+		inward = np.where(self.nu > np.pi)
+		self.EA[inward] = self.EA[inward] + 2*np.pi 
+		
+		#Calculate time since periapsis using Kepler's equation. 
+		self.t = (self.EA - self.e*np.sin(self.EA))*((self.a**3)/self.mu)**0.5
 		
 		#Input i, j and k vectors. 
 		self.I = [1,0,0]
@@ -91,25 +105,71 @@ class ellipse():
 		self.y0 = self.r*np.sin(self.nu)
 		self.z0 = self.r*np.zeros(self.x0.size)
 		
+		#Get initial periapsis vector. 
+		self.xp0 = self.periapsis
+		self.yp0 = 0
+		self.zp0 = 0 
+		
+		#Get initial semiparameter vector. 
+		self.xs0 = 0
+		self.ys0 = self.p
+		self.zs0 = 0
 		
 		#Rotate ellipse around z axis by argument of periapsis. 
 		self.x1 = self.x0*np.cos(self.omega) - self.y0*np.sin(self.omega)
 		self.y1 = self.x0*np.sin(self.omega) + self.y0*np.cos(self.omega) 
 		self.z1 = self.z0 
 		
+		#Rotate periapsis vector around z axis by argument of periapsis. 
+		self.xp1 = self.xp0*np.cos(self.omega) - self.yp0*np.sin(self.omega)
+		self.yp1 = self.xp0*np.sin(self.omega) + self.yp0*np.cos(self.omega)
+		self.zp1 = self.zp0 
+		
+		#Rotate periapsis vector around z axis by argument of periapsis. 
+		self.xs1 = self.xs0*np.cos(self.omega) - self.ys0*np.sin(self.omega)
+		self.ys1 = self.xs0*np.sin(self.omega) + self.ys0*np.cos(self.omega)
+		self.zs1 = self.zs0
 		
 		#Rotate ellipse around x axis by inclination. 
 		self.x2 = self.x1
 		self.y2 = self.y1*np.cos(self.inc) - self.z1*np.sin(self.inc)
 		self.z2 = self.y1*np.sin(self.inc) + self.z1*np.cos(self.inc) 
 		
+		#Rotate periapsis vector around x by inclination. 
+		self.xp2 = self.xp1
+		self.yp2 = self.yp1*np.cos(self.inc) - self.zp1*np.sin(self.inc)
+		self.zp2 = self.yp1*np.sin(self.inc) + self.zp1*np.cos(self.inc)
+		
+		#Rotate periapsis vector around x by inclination. 
+		self.xs2 = self.xs1
+		self.ys2 = self.ys1*np.cos(self.inc) - self.zs1*np.sin(self.inc)
+		self.zs2 = self.ys1*np.sin(self.inc) + self.zs1*np.cos(self.inc)
+		
 		#Rotate ellipse around z axis by RAAN. 
 		self.x_gse = self.x2*np.cos(self.raan) - self.y2*np.sin(self.raan)
 		self.y_gse = self.x2*np.sin(self.raan) + self.y2*np.cos(self.raan) 
 		self.z_gse = self.z2 
 		
+		#Rotate periapsis vector around z by RAAN. 
+		self.xp_gse = self.xp2*np.cos(self.raan) - self.yp2*np.sin(self.raan)
+		self.yp_gse = self.xp2*np.sin(self.raan) + self.yp2*np.cos(self.raan) 
+		self.zp_gse = self.zp2
+		
+		#Rotate periapsis vector around z by RAAN. 
+		self.xs_gse = self.xs2*np.cos(self.raan) - self.ys2*np.sin(self.raan)
+		self.ys_gse = self.xs2*np.sin(self.raan) + self.ys2*np.cos(self.raan) 
+		self.zs_gse = self.zs2
+		
 		#Create radius vectors. 
 		self.r_vector = np.array((self.x_gse, self.y_gse, self.z_gse)).T 
+		
+		#Create periapsis vector and unit vector. 
+		self.periapsis_vector = np.array([self.xp_gse, self.yp_gse, self.zp_gse])
+		self.periapsis_unit_vector = self.periapsis_vector/(self.xp_gse**2 + self.yp_gse**2 + self.zp_gse**2)**0.5
+		
+		#Create periapsis vector and unit vector. 
+		self.semip_vector = np.array([self.xs_gse, self.ys_gse, self.zs_gse])
+		self.semip_unit_vector = self.semip_vector/(self.xs_gse**2 + self.ys_gse**2 + self.zs_gse**2)**0.5
 		
 		#Get magnitude of new radius vectors. Should be same as r. 
 		self.r_mag = np.sqrt(self.x_gse**2 + self.y_gse**2 + self.z_gse**2)
@@ -118,8 +178,8 @@ class ellipse():
 		self.r_unit_vector = np.array([self.r_vector[i]/self.r_mag[i] for i in range(self.r_mag.size)])
 		
 		#Get normal vector. 
-		self.n_unit_vector = np.cross(self.r_unit_vector[0], self.r_unit_vector[90])
-	
+		self.n_unit_vector = np.cross(self.periapsis_unit_vector, self.semip_unit_vector)
+		
 		#Get h vector. 
 		self.h_vector = self.h*self.n_unit_vector 
 		
@@ -152,16 +212,18 @@ class ellipse():
 		omega = np.rad2deg(np.arccos(cosomega))
 		print ('Arg. Perigee = ', omega) 
 		
+		
 		#Calculate the time since perigee. 
-		self.calc_time() 
+		#self.calc_time() 
 		self.get_datetime_from_periapsis()
 		self.gse_to_gsm()
+	
 		
-	def calc_time(self):
-		'''This will calculate the time since periapsis for a given true anomaly.
+#	def calc_time(self):
+#		'''This will calculate the time since periapsis for a given true anomaly.
 		
-		It will use a simple numerical method to perform the integration. Currently, 
-		it just uses the spacing of the true anomaly array.'''
+#		It will use a simple numerical method to perform the integration. Currently, 
+#		it just uses the spacing of the true anomaly array.'''
 		
 		#Split the main bracket into two terms for ease of calculation. 
 		#self.term1 = (self.e*np.sin(self.nu))/((self.e**2-1)*(self.e*np.cos(self.nu)+1))	
@@ -170,29 +232,29 @@ class ellipse():
 		#self.term2 = (2*np.arctanh(self.arg_arctanh))/((self.e**2 - 1)**1.5)
 		
 		#Calculate p^2/h
-		self.coeff = self.p**2/self.h
+#		self.coeff = self.p**2/self.h
 		
-		self.t = np.zeros(self.nu.size) 
+#		self.t = np.zeros(self.nu.size) 
 		
 		#Calculate 1/(1+ecos(nu))^2
-		self.nu_func = 1/(1 + self.e*np.cos(self.nu))**2
+#		self.nu_func = 1/(1 + self.e*np.cos(self.nu))**2
 		
-		for t in range(len(self.t)):
-			if t == 0:
-				print (self.nu_func[0])
-				self.t[t] = 0
+#		for t in range(len(self.t)):
+#			if t == 0:
+#				print (self.nu_func[0])
+#				self.t[t] = 0
 			
-			else:
-				self.integral = self.trapezium_rule(self.nu[1]-self.nu[0], self.nu_func[0:t+1])
-				self.t[t] = self.coeff*self.integral 
+#			else:
+#				self.integral = self.trapezium_rule(self.nu[1]-self.nu[0], self.nu_func[0:t+1])
+#				self.t[t] = self.coeff*self.integral 
 		
 		#Now calculate the time in seconds. 
 		#self.t = self.coeff*self.integral 
 	
-	def trapezium_rule(self, nu_spacing, nu_func):
-		'''This will integrate a function using the trapezium rule. '''
+#	def trapezium_rule(self, nu_spacing, nu_func):
+#		'''This will integrate a function using the trapezium rule. '''
 		
-		return (nu_spacing/2)*(nu_func[0] + nu_func[-1] + 2*sum(nu_func[1:-1]))
+#		return (nu_spacing/2)*(nu_func[0] + nu_func[-1] + 2*sum(nu_func[1:-1]))
 		
 	def get_datetime_from_periapsis(self):
 		'''This will work out a datetime object for each point around the orbit by adding the time to the datetime object of the periapsis point.'''
@@ -438,20 +500,34 @@ class ellipse():
 		
 		
 		#Flight path angle (deg). 
+		#ax4 = fig.add_subplot(414)
+		#if t:
+		#	ax4.plot(self.t/3600, np.rad2deg(self.phi), 'k')
+		#	ax4.set_xlim(self.t[0]/3600, self.t[-1]/3600)
+		#	t_labels = ['{}\n{:.2f}'.format(tick, tick/(self.period/3600)) for tick in ax4.get_xticks()]
+		#	ax4.set_xticklabels(t_labels)
+		#	ax4.set_xlabel('Time (hrs:Period)')
+		#else:
+		#	ax4.plot(np.rad2deg(self.nu), np.rad2deg(self.phi), 'k')
+		#	ax4.set_xticks(nu_ticks)
+		#	ax4.set_xlim(0,360)
+		#	ax4.set_xlabel('True Anomaly (deg)') 
+		#ax4.set_ylabel('Flight Path \nAngle (deg)') 
+		
+		#Eccentric Anomaly  
 		ax4 = fig.add_subplot(414)
 		if t:
-			ax4.plot(self.t/3600, np.rad2deg(self.phi), 'k')
+			ax4.plot(self.t/3600, self.EA, 'k')
 			ax4.set_xlim(self.t[0]/3600, self.t[-1]/3600)
 			t_labels = ['{}\n{:.2f}'.format(tick, tick/(self.period/3600)) for tick in ax4.get_xticks()]
 			ax4.set_xticklabels(t_labels)
 			ax4.set_xlabel('Time (hrs:Period)')
 		else:
-			ax4.plot(np.rad2deg(self.nu), np.rad2deg(self.phi), 'k')
+			ax4.plot(np.rad2deg(self.nu), self.EA, 'k')
 			ax4.set_xticks(nu_ticks)
 			ax4.set_xlim(0,360)
 			ax4.set_xlabel('True Anomaly (deg)') 
-		ax4.set_ylabel('Flight Path \nAngle (deg)') 
-		
+		ax4.set_ylabel('Eccentric Anomaly') 
 		ax4.grid()
 		
 		if t:
