@@ -30,6 +30,7 @@ class ppmlr_image():
 		
 		#Calculate the LOS intensity that forms the image. 
 		self.calc_model_image()
+		
 	
 	def calc_dynamic_pressure(self):
 		'''Calculate this as it's a parameter in some models.'''
@@ -314,6 +315,9 @@ class ppmlr_image():
 		ax2.plot([self.smile.xpos[0][-1][-1],self.smile.xpos[-1][-1][-1]], [self.smile.ypos[0][-1][-1],self.smile.ypos[-1][-1][-1]], [self.smile.zpos[0][-1][-1],self.smile.zpos[-1][-1][-1]], 'k')
 		ax2.plot([self.smile.xpos[-1][-1][-1],self.smile.xpos[-1][0][-1]], [self.smile.ypos[-1][-1][-1],self.smile.ypos[-1][0][-1]], [self.smile.zpos[-1][-1][-1],self.smile.zpos[-1][0][-1]], 'k')
 		ax2.plot([self.smile.xpos[-1][0][-1],self.smile.xpos[0][0][-1]], [self.smile.ypos[-1][0][-1],self.smile.ypos[0][0][-1]], [self.smile.zpos[-1][0][-1],self.smile.zpos[0][0][-1]], 'k')
+	
+
+        
 		
 	def add_earth(self, ax):
 		'''This will add a sphere for the Earth. '''

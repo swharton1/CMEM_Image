@@ -355,6 +355,9 @@ class ellipse():
 		
 		fig.text(0.95, 0.05, 'Outbound', color='cyan', fontsize=8, ha='right')
 		fig.text(0.95, 0.03, 'Inbound', color='darkblue', fontsize=8, ha='right')
+		fig.text(0.05, 0.06, 'Inclination = {:.1f} deg'.format(np.rad2deg(self.inc)), fontsize=8, ha='left')
+		fig.text(0.05, 0.04, 'Arg. Periapsis = {:.1f} deg'.format(np.rad2deg(self.omega)), fontsize=8, ha='left')
+		fig.text(0.05, 0.02, 'RAAN* = {:.1f} deg'.format(np.rad2deg(self.raan)), fontsize=8, ha='left') 
 		
 		fig.savefig(self.plot_path+"time_ellipses_3d.png") 
 		
@@ -428,6 +431,9 @@ class ellipse():
 		
 		fig.text(0.95, 0.05, 'Outbound', color='cyan', fontsize=8, ha='right')
 		fig.text(0.95, 0.03, 'Inbound', color='darkblue', fontsize=8, ha='right')
+		fig.text(0.05, 0.06, 'Inclination = {:.1f} deg'.format(np.rad2deg(self.inc)), fontsize=8, ha='left')
+		fig.text(0.05, 0.04, 'Arg. Periapsis = {:.1f} deg'.format(np.rad2deg(self.omega)), fontsize=8, ha='left')
+		fig.text(0.05, 0.02, 'RAAN* = {:.1f} deg'.format(np.rad2deg(self.raan)), fontsize=8, ha='left') 
 		
 		fig.savefig(self.plot_path+'time_ellipses_2d.png')
 			
@@ -442,7 +448,7 @@ class ellipse():
 		#t_ticks = np.linspace(0,self.period/3600,13)
 		
 		fig = plt.figure(figsize=(6,8))
-		fig.subplots_adjust(hspace=0.5, left=0.15)
+		fig.subplots_adjust(hspace=0.2, left=0.15, bottom=0.10, top=0.9)
 		
 		#Radial position (RE)
 		ax1 = fig.add_subplot(411)
@@ -481,6 +487,11 @@ class ellipse():
 		ax4.minorticks_on()
 		ax4.set_ylim(0,360)
 		ax4.set_yticks([0,90,180,270,360])
+		
+		fig.text(0.05, 0.06, 'Inclination = {:.1f} deg'.format(np.rad2deg(self.inc)), fontsize=8, ha='left')
+		fig.text(0.05, 0.04, 'Arg. Periapsis = {:.1f} deg'.format(np.rad2deg(self.omega)), fontsize=8, ha='left')
+		fig.text(0.05, 0.02, 'RAAN* = {:.1f} deg'.format(np.rad2deg(self.raan)), fontsize=8, ha='left') 
+		
 		fig.savefig(self.plot_path+"time_orbital_params.png") 
 		
 		

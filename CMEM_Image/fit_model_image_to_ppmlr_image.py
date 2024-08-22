@@ -369,7 +369,7 @@ class fit_image():
 		# Name and locate the pickle file. 
 		pickle_path = os.environ.get("PICKLE_PATH")
         
-		fname = "fit_image_n_{}_SMILE_{:.2f}_{:.2f}_{:.2f}_Target_{}_{}_{}_nxm_{}_{}_{}_{}_im{}_{}.pkl".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], self.smile.n_pixels, self.smile.m_pixels, self.current_model, self.cost_func, self.init_method, savetag)
+		fname = "fit_image_n_{}_SMILE_{:.2f}_{:.2f}_{:.2f}_Target_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_{}_{}_im{}_{}.pkl".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], self.smile.n_pixels, self.smile.m_pixels, self.current_model, self.cost_func, self.init_method, savetag)
 
 		# Add all the desired information to a dictionary. 
 		pickle_dict = {
@@ -408,7 +408,10 @@ class fit_image():
 						"eta_model":self.eta_model,
 						"xpos":self.smile.xpos,
 						"ypos":self.smile.ypos,
-						"zpos":self.smile.zpos
+						"zpos":self.smile.zpos,
+						"maxIx":self.ppmlr_image.ppmlr.maxIx,
+						"maxdIx":self.ppmlr_image.ppmlr.maxdIx,
+						"f.25":self.ppmlr_image.ppmlr.f
 						}
         
 		with open(os.path.join(pickle_path, self.current_model+"_optimised", fname), "wb") as f:

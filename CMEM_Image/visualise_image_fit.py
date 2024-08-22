@@ -41,13 +41,16 @@ class analyse_fit():
 		#Get magnetopause projection information. 
 		self.get_magnetopause_projection() 
 		
+		#Find whether SMILE is inside or outside the magnetopause. 
+		self.smile_in_or_out()
+		
 	def get_magnetopause_projection(self):
 		'''This will do all the calculations for the optimised magnetopause in order to project it into an image.'''
 		
 		#Get model magnetopause positions. 
 		#Define ranges for theta and phi in degrees. 
-		theta = np.linspace(0,120,26)
-		phi = np.linspace(0,360,37)
+		theta = np.linspace(0,120,121)
+		phi = np.linspace(0,360,181)
 		
 		self.get_model_magnetopause(theta, phi) 
 		
@@ -75,7 +78,7 @@ class analyse_fit():
 		
 		#Now get the theta and phi of the unit p vectors. 
 		self.thetap = np.arccos(self.pz_unit)
-		self.phip = np.arccos(self.px_unit) 
+		self.phip = np.arccos(self.px_unit/(self.px_unit**2 + self.py_unit**2)**0.5) 
 		
 		#Now get the difference in theta and the difference 
 		#in phi from the central look direction. 
@@ -158,6 +161,29 @@ class analyse_fit():
 		sub_idx = np.where((self.theta2d == 0) & (self.phi2d == 0))
 		self.rmp_sub = self.rmp[sub_idx] 
 	
+	def smile_in_or_out(self):
+		'''This will call the magnetopause model again but only in the direction of SMILE to determine whether SMILE is inside or outside the optimised magnetopause.'''
+		
+		#Convert SMILE vector to Shue Coordinates. 
+		smile_loc = self.model['smile_loc']
+		self.smile_r = (smile_loc[0]**2 + smile_loc[1]**2 + smile_loc[2]**2)**0.5
+		self.smile_theta = np.arccos(smile_loc[0]/self.smile_r)
+		self.smile_phi = np.arccos(smile_loc[1]/((smile_loc[1]**2 + smile_loc[2]**2)**0.5))
+		
+		if self.current_model == 'jorg':
+			
+			#Get the Jorgensen magnetopause for a range of theta and phi 
+			self.rmp_smile = bef.shue_func(self.smile_theta, self.smile_phi, self.model['params best nm'][0], self.model['params best nm'][7], self.model['params best nm'][8])
+			
+		elif self.current_model == 'cmem':
+			
+			#Get Lin magnetopause for a range of theta and phi 
+			self.rmp_smile = bef.lin_scaled_func(self.smile_theta, self.smile_phi, *self.lin_coeffs, p0=self.model['params best nm'][0], p1=self.model['params best nm'][7], p2=self.model['params best nm'][8], p3=self.model['params best nm'][9]) 
+		
+		if self.smile_r > self.rmp_smile:
+			self.inout = 'out'
+		else:
+			self.inout = 'in'
 	#THIS IS WHERE WE CALCULATE THE OPTIMUM EMISSIVITY, AS IT'S NOT SAVED. 
 	
 #	def get_eta_model(self, params):
@@ -180,7 +206,7 @@ class analyse_fit():
 		
 
 	
-	def plot_change_in_parameters(self, save=False, savetag=""):
+	def plot_change_in_parameters(self, save=False, savetag="", fname=None):
 		'''This will plot how the parameters changed over the course of the
 		optimisation procedure. '''
 
@@ -311,12 +337,15 @@ class analyse_fit():
 		ax2.set_ylabel(self.parameter_units[2], fontsize=8)
        
 		if save: 
-			fig.savefig(self.plot_path+"fitted_images/{}_parameter_changes{}.png".format(self.filename, savetag))
+			if fname is None:
+				fig.savefig(self.plot_path+"fitted_images/{}_parameter_changes{}.png".format(self.filename.split("_.pkl")[0], savetag))
+			else:
+				fig.savefig(self.plot_path+fname)
 
 		self.fig_param = fig 
 
 
-	def plot_images(self, cmap='hot', vmin=-8, vmax=-4, levels=100, los_max=12, save=False, savetag="", add_mp_projection=False, fname=None, ellipse=None, elev=45, azim=45, add_fov_projection=False, colour_cap=0):
+	def plot_images(self, cmap='hot', vmin=-8, vmax=-4, levels=100, los_max=12, save=False, savetag="", add_mp_projection=True, fname=None, ellipse=None, elev=45, azim=45, add_fov_projection=False, colour_cap=0):
 		'''This will plot the final model image alongside the PPMLR image.
 		
 		Parameters
@@ -381,7 +410,10 @@ class analyse_fit():
 		
 		#Now add the model image. 
 		mesh2 = ax2.pcolormesh(phi_pixels, theta_pixels, self.model['model los intensity'], cmap=cmap, vmin=0, vmax=los_max)
-		ax2.set_title("{} Image from SMILE".format(self.image_tag, fontsize=10))
+		if self.inout == 'out':
+			ax2.set_title("{} Image from SMILE\nSMILE is outside MP".format(self.image_tag), fontsize=10)
+		else:
+			ax2.set_title("{} Image from SMILE\nSMILE is inside MP".format(self.image_tag), fontsize=10)
 		
 		ax2.set_xlabel('deg')
 		if not add_fov_projection: ax2.set_ylabel('deg')
@@ -391,28 +423,36 @@ class analyse_fit():
 		
 		#Add a projection of the magnetopause here. 
 		#ax2.scatter(self.dphip, self.dthetap, c='w', s=5)
-		if add_mp_projection:
+		#if add_mp_projection:
 		
 			#Add lines going for each constant value of phi. 
-			for p in range(len(self.dphip)):
-				front = np.where(self.tangent[p] > 90)
-				back = np.where(self.tangent[p] <= 90)
-				ax2.plot(self.dphip[p][front], self.dthetap[p][front], c='w', lw=0.5)
-				ax2.plot(self.dphip[p][back], self.dthetap[p][back], c='gray', lw=0.5)
+		#	for p in range(len(self.dphip)):
+		#		front = np.where(self.tangent[p] > 90)
+		#		back = np.where(self.tangent[p] <= 90)
+		#		ax2.plot(self.dphip[p][front], self.dthetap[p][front], c='w', lw=0.5)
+		#		ax2.plot(self.dphip[p][back], self.dthetap[p][back], c='gray', lw=0.5)
 		
 			#Transpose arrays to plot cylindrical lines. 
 		
-			for t in range(len(self.dphip[0])):
-				front = np.where(self.tangent[:,t] > 90)
-				back = np.where(self.tangent[:,t] <= 90)
-				ax2.plot(self.dphip[:,t][front], self.dthetap[:,t][front], c='w', lw=0.5)
-				ax2.plot(self.dphip[:,t][back], self.dthetap[:,t][back], c='gray', lw=0.5)
+		#	for t in range(len(self.dphip[0])):
+		#		front = np.where(self.tangent[:,t] > 90)
+		#		back = np.where(self.tangent[:,t] <= 90)
+		#		ax2.plot(self.dphip[:,t][front], self.dthetap[:,t][front], c='w', lw=0.5)
+		#		ax2.plot(self.dphip[:,t][back], self.dthetap[:,t][back], c='gray', lw=0.5)
 		
 			#Make sure only FOV is shown, even if MP projection goes outside it. 
-			ax2.set_xlim(phi_pixels.min(), phi_pixels.max())
-			ax2.set_ylim(theta_pixels.min(), theta_pixels.max())
+		#	ax2.set_xlim(phi_pixels.min(), phi_pixels.max())
+		#	ax2.set_ylim(theta_pixels.min(), theta_pixels.max())
 		
-			#Add a label for the subsolar magnetopause radial position. 
+		#Add a label for the subsolar magnetopause radial position. 
+		
+		
+		#Add a label for the PPMLR subsolar magnetopause position. 
+		if add_fov_projection:
+			fig.text(0.30, 0.2, r"$r_0$"+" = {:.2f}".format(self.model['maxIx'])+r"$R_E$", ha='center')
+			fig.text(0.60, 0.2, r"$r_0$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
+		else:
+			fig.text(0.42, 0.2, r"$r_0$"+" = {:.2f}".format(self.model['maxIx'])+r"$R_E$", ha='center')
 			fig.text(0.90, 0.2, r"$r_0$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
 		
 		if add_fov_projection:
@@ -464,6 +504,9 @@ class analyse_fit():
 			ax3.set_title("SMILE = ({:.2f},{:.2f},{:.2f})\nTarget = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
 			ax3.set_aspect('equal')
 			ax3.view_init(elev,azim) 
+		
+		#Add a line from the Earth to the spacecraft.
+		#ax3.plot([0,self.model['smile_loc'][0]], [0, self.model['smile_loc'][1]], [0, self.model['smile_loc'][2]], 'cyan')
 		
 		# Add a label to show the model parameters. 
 		label = ""
