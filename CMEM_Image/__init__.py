@@ -9,6 +9,8 @@ from . import ellipse
 from . import ellipse2
 from . import fit_model_image_to_ppmlr_image
 from . import visualise_image_fit 
+from . import analyse_target_variation 
+from . import analyse_pixel_variation 
 
 import os 
 # This is a backup to set the environment variables if they haven't been set externally. 

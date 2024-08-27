@@ -3,6 +3,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 import os
+from matplotlib.gridspec import GridSpec
 
 from . import boundary_emissivity_functions as bef 
 from . import get_names_and_units as gnau 
@@ -14,7 +15,9 @@ class image_sim():
 	def __init__(self, smile, model="jorg", init_method=2, params0=None, temp=200000, density=5, vx=400, vy=0, vz=0, bx=0, by=0, bz=5, dipole=0): 
 		'''This takes in the smile object and initial parameters and adds them to self.'''
 		
-		
+		#Save the image to a standard name. 
+		self.plot_path = os.environ.get("PLOT_PATH") 
+        
 		self.smile = smile 
 		
 		# Extract any useful solar wind parameters
@@ -38,6 +41,11 @@ class image_sim():
 		self.get_init_model_params(model=model, init_method=init_method, params0=params0)
 		self.calc_model_image()
 		
+		#Get emissivity for all coodinates if doing the outreach plot. 
+		#if outreach: 
+		#	self.get_emissivity_all_coords()
+		#	print ('Completed emissivity calculation...')
+			
 	def calc_dynamic_pressure(self):
 		'''Calculate this as it's a parameter in some models.'''
 
@@ -273,28 +281,131 @@ class image_sim():
 		
 		fig.text(0.5, 0.02, label, ha='center')
                     
-        #Save the image to a standard name. 
-		plot_path = os.environ.get("PLOT_PATH") 
         
-		fig.savefig(plot_path+"{}_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.current_model, self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
+		fig.savefig(self.plot_path+"{}_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.current_model, self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
 	
+	
+	
+	
+	
+	#SPECIAL ADAPTATIONS FOR OUTREACH PLOT. 
+	#######################################
+	def get_emissivity_all_coords(self):
+		'''This will calculate the emissivity using CMEM for all coordinates'''
 		
-	def add_fov_boundaries(self, ax2):
-		'''This will add the FOV boundaries in black. '''
+		print ('Calculating emissivity for all points in space...')
+		
+		#Define your own set of coordinates. 
+		x = np.linspace(-20,40,300)
+		y = np.linspace(-40,40,400)
+		z = np.linspace(-40,40,400)
+		
+		#Make 3D
+		self.X_all, self.Y_all, self.Z_all = np.meshgrid(x,y,z)
+		
+		#Convert to Shue coordinates. 
+		r_all, theta_all, phi_all = self.convert_xyz_to_shue_coords(self.X_all,self.Y_all,self.Z_all)
+		
+		#Calculate the emissivity for each LOS coordinate. 
+		self.eta_all = self.current_func(r_all, theta_all, phi_all, *self.lin_coeffs, *self.params0)
+		 
+	def outreach_plot(self, elev=45, azim=45, cmap='bone', vmin=-8, vmax=-4, levels=100, colour_cap=2, fname='test'):
+		'''This will make a more funky looking outreach plot for JAC''' 
+		
+		#Sort out the plot configuration first. 
+		plt.style.use('dark_background')
+		plt.rcParams['grid.color'] = 'k'
+
+		fig = plt.figure(figsize=(8,6))
+		fig.patch.set_facecolor('k')
+		gs = GridSpec(2,3, left=0.01, top=0.99, right=0.99, bottom=0.01)
+		ax1 = fig.add_subplot(gs[:,:], projection='3d')
+		ax1.set_facecolor('k')
+		ax1.xaxis.set_pane_color((0.0,0.0,0.0,0.0))
+		ax1.yaxis.set_pane_color((0.0,0.0,0.0,0.0))
+		ax1.zaxis.set_pane_color((0.0,0.0,0.0,0.0))
+		ax1.xaxis.line.set_color('k')
+		ax1.yaxis.line.set_color('k')
+		ax1.zaxis.line.set_color('k') 
+		ax1.set_xlim(-20,30)
+		ax1.set_ylim(-30,30)
+		ax1.set_zlim(-30,30)
+
+		ax1.set_xticks([])
+		ax1.set_yticks([])
+		ax1.set_zticks([])
+		ax1.set_aspect('equal')
+
+		ax2 = fig.add_subplot(gs[0,2])
+		ax2.set_xticks([])
+		ax2.set_yticks([])
+	
+		#Add the Earth on. 
+		self.add_earth(ax1, color='w') 
+        
+        #Make pixel information for image plot. 
+        # Make pixel arrays for plotting. 
+		i_array = np.linspace(0,self.smile.n_pixels, self.smile.n_pixels+1)-0.5
+		j_array = np.linspace(0,self.smile.m_pixels, self.smile.m_pixels+1)-0.5
+        
+		J, I = np.meshgrid(j_array, i_array)
+        
+        #Convert to degrees. 
+		theta_pixels = - (self.smile.theta_fov/2.) + (self.smile.theta_fov/self.smile.n_pixels)*(I+0.5)
+		phi_pixels = -(self.smile.phi_fov/2.) + (self.smile.phi_fov/self.smile.m_pixels)*(J+0.5)
+        
+        #Convert to degrees. Minus sign is so you look away from camera, not towards. 
+		theta_pixels = -np.rad2deg(theta_pixels)
+		phi_pixels = -np.rad2deg(phi_pixels)
+        
+		#Make image plot. 
+		mesh = ax2.pcolormesh(phi_pixels, theta_pixels, self.los_intensity, cmap=cmap, vmin=0)
+		ax2.set_aspect('equal')
+        
+        #Add the emissivity along the LOS. 	
+		los_log = np.zeros(self.eta_model.shape)+vmin
+		i = np.where(self.eta_model > 0)
+		los_log[i] = np.log10(self.eta_model[i])
+		
+		
+		#Add the emissivity for the whole space. 	
+		#los_log = np.zeros(self.eta_all.shape)+vmin
+		#i = np.where(self.eta_all > 0)
+		#los_log[i] = np.log10(self.eta_all[i])
+		
+		
+		#Only plot values above a certain emissivity. 
+		bright = np.where(los_log > vmin+colour_cap) 
+		
+		emit = ax1.scatter(self.smile.xpos[bright], self.smile.ypos[bright], self.smile.zpos[bright], c=los_log[bright], cmap=cmap, s=0.001, alpha=0.2, vmin=vmin, vmax=vmax)
+		
+		#emit = ax1.scatter(self.X_all[bright], self.Y_all[bright], self.Z_all[bright], c=los_log[bright], cmap="hot", s=0.001, alpha=0.2, vmin=vmin, vmax=vmax)
+        
+        #Add FOV boundaries. 
+		self.add_fov_boundaries(ax1, color='w', lw=1)
+		
+		#Save figure.
+		if fname is None:
+			fig.savefig(self.plot_path+'outreach_sim/'+fname)
+		else:
+			fig.savefig(fname)
+		
+	def add_fov_boundaries(self, ax2, color='k', lw=2):
+		'''This will add the FOV boundaries in black/white. '''
 		
 		#For corner pixels only. 
-		ax2.plot(self.smile.xpos[0][0], self.smile.ypos[0][0], self.smile.zpos[0][0], 'k', lw=2)
-		ax2.plot(self.smile.xpos[0][-1], self.smile.ypos[0][-1], self.smile.zpos[0][-1], 'k', lw=2)
-		ax2.plot(self.smile.xpos[-1][0], self.smile.ypos[-1][0], self.smile.zpos[-1][0], 'k', lw=2)
-		ax2.plot(self.smile.xpos[-1][-1], self.smile.ypos[-1][-1], self.smile.zpos[-1][-1], 'k', lw=2)
+		ax2.plot(self.smile.xpos[0][0], self.smile.ypos[0][0], self.smile.zpos[0][0], color, lw=lw)
+		ax2.plot(self.smile.xpos[0][-1], self.smile.ypos[0][-1], self.smile.zpos[0][-1], color, lw=lw)
+		ax2.plot(self.smile.xpos[-1][0], self.smile.ypos[-1][0], self.smile.zpos[-1][0], color, lw=lw)
+		ax2.plot(self.smile.xpos[-1][-1], self.smile.ypos[-1][-1], self.smile.zpos[-1][-1], color, lw=lw)
 		
 		#Join corners together. 
-		ax2.plot([self.smile.xpos[0][0][-1],self.smile.xpos[0][-1][-1]], [self.smile.ypos[0][0][-1],self.smile.ypos[0][-1][-1]], [self.smile.zpos[0][0][-1],self.smile.zpos[0][-1][-1]], 'k')
-		ax2.plot([self.smile.xpos[0][-1][-1],self.smile.xpos[-1][-1][-1]], [self.smile.ypos[0][-1][-1],self.smile.ypos[-1][-1][-1]], [self.smile.zpos[0][-1][-1],self.smile.zpos[-1][-1][-1]], 'k')
-		ax2.plot([self.smile.xpos[-1][-1][-1],self.smile.xpos[-1][0][-1]], [self.smile.ypos[-1][-1][-1],self.smile.ypos[-1][0][-1]], [self.smile.zpos[-1][-1][-1],self.smile.zpos[-1][0][-1]], 'k')
-		ax2.plot([self.smile.xpos[-1][0][-1],self.smile.xpos[0][0][-1]], [self.smile.ypos[-1][0][-1],self.smile.ypos[0][0][-1]], [self.smile.zpos[-1][0][-1],self.smile.zpos[0][0][-1]], 'k')
+		ax2.plot([self.smile.xpos[0][0][-1],self.smile.xpos[0][-1][-1]], [self.smile.ypos[0][0][-1],self.smile.ypos[0][-1][-1]], [self.smile.zpos[0][0][-1],self.smile.zpos[0][-1][-1]], color, lw=lw)
+		ax2.plot([self.smile.xpos[0][-1][-1],self.smile.xpos[-1][-1][-1]], [self.smile.ypos[0][-1][-1],self.smile.ypos[-1][-1][-1]], [self.smile.zpos[0][-1][-1],self.smile.zpos[-1][-1][-1]], color, lw=lw)
+		ax2.plot([self.smile.xpos[-1][-1][-1],self.smile.xpos[-1][0][-1]], [self.smile.ypos[-1][-1][-1],self.smile.ypos[-1][0][-1]], [self.smile.zpos[-1][-1][-1],self.smile.zpos[-1][0][-1]], color, lw=lw)
+		ax2.plot([self.smile.xpos[-1][0][-1],self.smile.xpos[0][0][-1]], [self.smile.ypos[-1][0][-1],self.smile.ypos[0][0][-1]], [self.smile.zpos[-1][0][-1],self.smile.zpos[0][0][-1]], color, lw=lw)
 		
-	def add_earth(self, ax):
+	def add_earth(self, ax, color='k'):
 		'''This will add a sphere for the Earth. '''
 		
 		#Create a spherical surface. 
@@ -305,7 +416,7 @@ class image_sim():
 		y = radius* np.outer(np.sin(u), np.sin(v))
 		z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
 
-		ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
+		ax.plot_surface(x, y, z, color=color, lw=0, alpha=1)
 		
 	def sig_figs(self, x: float, precision: int):
 		"""
