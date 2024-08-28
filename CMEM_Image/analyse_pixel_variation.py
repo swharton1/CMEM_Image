@@ -1,4 +1,4 @@
-#This will analyse the data in the pickle file for the run_fit_image_target experiment. 
+#This will analyse the data in the pickle file for the run_fit_image_pixel experiment. 
 
 import numpy as np
 import matplotlib.pyplot as plt

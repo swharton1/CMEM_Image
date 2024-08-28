@@ -483,7 +483,7 @@ class analyse_fit():
 		
 			#Add orbit ellipse if it is provided.
 			if ellipse is not None: 
-				ax3.plot(ellipse.x3/ellipse.RE, ellipse.y3/ellipse.RE, ellipse.z3/ellipse.RE, 'k')
+				ax3.plot(ellipse.coords_gsm.x/ellipse.RE, ellipse.coords_gsm.y/ellipse.RE, ellipse.coords_gsm.z/ellipse.RE, 'k')
         
 			#Add on the Lin magnetopause from the optimised model. 
 			if add_mp_projection: 
