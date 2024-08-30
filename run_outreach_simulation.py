@@ -29,7 +29,7 @@ yv = y[view]
 zv = z[view]
 print ('xv.size = ', xv.size)
 
-sim_folder = 'sim2/'
+sim_folder = 'sim3/'
 #Make a directory to put the images in. 
 #orbit_folder_name = "ra{}_rp{}_inc{}_raan{}_omega{}/".format(rp, ra, inc, raan, omega) 
 plot_path = os.path.join(os.environ.get("PLOT_PATH"), 'outreach_sim/')
@@ -54,7 +54,11 @@ for i in range(len(rv)):
 	#Create CMEM image. 
 	image = CMEM_Image.sim_image.image_sim(smile, model='cmem', density=20)
 	
-	image.outreach_plot(colour_cap=2, elev=45, azim=45, cmap='bone', fname=full_path+'sim2_{:0>2d}.png'.format(i))
+	#If you want to plot the whole space. 
+	image.get_emissivity_all_coords()
+	
+	#Use outreach_plot1 for just FOV. outreach_plot2 for whole space. 
+	image.outreach_plot2(colour_cap=2, elev=45, azim=45, cmap='bone', fname=full_path+'sim2_{:0>2d}.png'.format(i), max_alpha=0.3)
 	
 	plt.close("all")
 

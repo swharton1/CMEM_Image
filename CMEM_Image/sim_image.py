@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import os
 from matplotlib.gridspec import GridSpec
+import matplotlib.image as mpl_image
+from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
 
 from . import boundary_emissivity_functions as bef 
 from . import get_names_and_units as gnau 
@@ -389,7 +391,144 @@ class image_sim():
 			fig.savefig(self.plot_path+'outreach_sim/'+fname)
 		else:
 			fig.savefig(fname)
+	
+	def outreach_plot2(self, elev=45, azim=45, cmap='bone', vmin=-8, vmax=-4, levels=100, colour_cap=2, fname=None, max_alpha=0.2):
+		'''This will make a more funky looking outreach plot for JAC.
+		This will plot the whole space, not just the FOV. ''' 
 		
+		#Sort out the plot configuration first. 
+		plt.style.use('dark_background')
+		plt.rcParams['grid.color'] = 'k'
+
+		fig = plt.figure(figsize=(8,6))
+		fig.patch.set_facecolor('k')
+		gs = GridSpec(8,12, left=0.01, top=0.99, right=0.99, bottom=0.01)
+		ax1 = fig.add_subplot(gs[:,:], projection='3d')
+		ax1.set_facecolor('k')
+		ax1.xaxis.set_pane_color((0.0,0.0,0.0,0.0))
+		ax1.yaxis.set_pane_color((0.0,0.0,0.0,0.0))
+		ax1.zaxis.set_pane_color((0.0,0.0,0.0,0.0))
+		ax1.xaxis.line.set_color('k')
+		ax1.yaxis.line.set_color('k')
+		ax1.zaxis.line.set_color('k') 
+		ax1.set_xlim(-10,20)
+		ax1.set_ylim(-25,25)
+		ax1.set_zlim(-25,25)
+		#ax1.set_xlabel('x', color='w')
+
+		ax1.set_xticks([])
+		ax1.set_yticks([])
+		ax1.set_zticks([])
+		ax1.set_aspect('equal')
+
+		ax2 = fig.add_subplot(gs[0:4,8:12])
+		ax2.set_xticks([])
+		ax2.set_yticks([])
+	
+		#Add the Earth on. 
+		self.add_earth2(ax1) 
+        
+        #Make pixel information for image plot. 
+        # Make pixel arrays for plotting. 
+		i_array = np.linspace(0,self.smile.n_pixels, self.smile.n_pixels+1)-0.5
+		j_array = np.linspace(0,self.smile.m_pixels, self.smile.m_pixels+1)-0.5
+        
+		J, I = np.meshgrid(j_array, i_array)
+        
+        #Convert to degrees. 
+		theta_pixels = - (self.smile.theta_fov/2.) + (self.smile.theta_fov/self.smile.n_pixels)*(I+0.5)
+		phi_pixels = -(self.smile.phi_fov/2.) + (self.smile.phi_fov/self.smile.m_pixels)*(J+0.5)
+        
+        #Convert to degrees. Minus sign is so you look away from camera, not towards. 
+		theta_pixels = -np.rad2deg(theta_pixels)
+		phi_pixels = -np.rad2deg(phi_pixels)
+        
+		#Make image plot. 
+		mesh = ax2.pcolormesh(phi_pixels, theta_pixels, self.los_intensity, cmap=cmap, vmin=0)
+		ax2.set_aspect('equal')
+        
+        #Add the emissivity along the LOS. 	
+		#los_log = np.zeros(self.eta_model.shape)+vmin
+		#i = np.where(self.eta_model > 0)
+		#los_log[i] = np.log10(self.eta_model[i])
+		
+		
+		#Add the emissivity for the whole space. 	
+		los_log = np.zeros(self.eta_all.shape)+vmin
+		i = np.where(self.eta_all > 0)
+		los_log[i] = np.log10(self.eta_all[i])
+		
+		#Create normalised array for alpha values. 
+		los_alpha = (los_log - vmin)/(vmax-vmin)
+		
+		#Set all alpha values to go between 0 and 0.2 
+		los_alpha = los_alpha*max_alpha
+		
+		#Only plot values above a certain emissivity. 
+		bright = np.where(los_log > vmin+colour_cap)
+		#bright_inner = np.where(los_log > vmin+colour_cap+1) 
+		#bright_outer = np.where((los_log > vmin+colour_cap) & (los_log <= vmin+colour_cap+1))
+		#emit = ax1.scatter(self.smile.xpos[bright], self.smile.ypos[bright], self.smile.zpos[bright], c=los_log[bright], cmap=cmap, s=0.001, alpha=0.2, vmin=vmin, vmax=vmax)
+		
+		emit_inner = ax1.scatter(self.X_all[bright], self.Y_all[bright], self.Z_all[bright], c=los_log[bright], cmap=cmap, s=0.001, alpha=los_alpha[bright], vmin=vmin, vmax=vmax)
+		#emit_outer = ax1.scatter(self.X_all[bright_outer], self.Y_all[bright_outer], self.Z_all[bright_outer], c=los_log[bright_outer], cmap=cmap, s=0.001, alpha=0.1, vmin=vmin, vmax=vmax)
+        
+        #Add FOV boundaries. 
+		self.add_fov_boundaries(ax1, color='w', lw=1)
+		
+		#Now we are going to add the SMILE logo. 
+		#https://towardsdatascience.com/how-to-add-an-image-to-a-matplotlib-plot-in-python-76098becaf53
+		
+		smile_logo_file = "/home/s/sw682/Pictures/SMILE_logo.png"
+		smile_logo = mpl_image.imread(smile_logo_file) 
+		
+		#Create Outreach box for SMILE logo. 
+		smile_imagebox = OffsetImage(smile_logo, zoom=0.3)
+		smile_ab = AnnotationBbox(smile_imagebox, (0.5,0.5), frameon=False)
+		
+		#Create axis for the image. 
+		ax3 = fig.add_subplot(gs[6:8,0:2])
+		ax3.set_xlim(0,1)
+		ax3.set_ylim(0,1)
+		ax3.add_artist(smile_ab)
+		ax3.set_xticks([])
+		ax3.set_yticks([])
+		ax3.spines['bottom'].set_color('k')
+		ax3.spines['top'].set_color('k')
+		ax3.spines['left'].set_color('k')
+		ax3.spines['right'].set_color('k')
+		
+		#Get the UOL logo.
+		uol_logo_file = "/home/s/sw682/Pictures/uol_logo.png"
+		uol_logo = mpl_image.imread(uol_logo_file) 
+		
+		#print ('Shape of UOL logo:', uol_logo.shape) 
+		
+		#Create Outreach box for UOL logo. 
+		uol_imagebox = OffsetImage(uol_logo, zoom=0.15)
+		uol_ab = AnnotationBbox(uol_imagebox, (0.5,0.5), frameon=False)
+		
+		#Create axis for the image. 
+		ax4 = fig.add_subplot(gs[6:8,8:12])
+		ax4.set_xlim(0,1)
+		ax4.set_ylim(0,1)
+		ax4.add_artist(uol_ab)
+		ax4.set_xticks([])
+		ax4.set_yticks([])
+		ax4.spines['bottom'].set_color('k')
+		ax4.spines['top'].set_color('k')
+		ax4.spines['left'].set_color('k')
+		ax4.spines['right'].set_color('k')
+		
+		
+		#Save figure.
+		if fname is None:
+			fig.savefig(self.plot_path+'outreach_sim/test_v2.png')
+		else:
+			fig.savefig(fname)
+			
+			
+				
 	def add_fov_boundaries(self, ax2, color='k', lw=2):
 		'''This will add the FOV boundaries in black/white. '''
 		
@@ -417,7 +556,28 @@ class image_sim():
 		z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
 
 		ax.plot_surface(x, y, z, color=color, lw=0, alpha=1)
+	
+	def add_earth2(self, ax):
+		'''This will add a sphere for the Earth. White on dayside, navy on nightside'''
 		
+		#Create a hemis-spherical surface that is white. 
+		radius = 1
+		u = np.linspace(-np.pi/2, np.pi/2, 100) 
+		v = np.linspace(0, np.pi, 100) 
+		x = radius* np.outer(np.cos(u), np.sin(v))
+		y = radius* np.outer(np.sin(u), np.sin(v))
+		z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+
+		ax.plot_surface(x, y, z, color='w', lw=0, alpha=1, edgecolor='w', antialiased=False, shade=False)
+		
+		u = np.linspace(np.pi/2, 3*np.pi/2, 100) 
+		v = np.linspace(0, np.pi, 100) 
+		x = radius* np.outer(np.cos(u), np.sin(v))
+		y = radius* np.outer(np.sin(u), np.sin(v))
+		z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+
+		ax.plot_surface(x, y, z, color='navy', lw=0, alpha=1, edgecolor='navy', antialiased=False, shade=False)
+			
 	def sig_figs(self, x: float, precision: int):
 		"""
 		Rounds a number to number of significant figures
