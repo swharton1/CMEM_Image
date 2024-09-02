@@ -68,3 +68,60 @@ def calculate_meridian_planes(x_3d, y_3d, z_3d, var_3d):
 		
 	return xp_y, yp_y, zp_y, var_y, xp_z, yp_z, zp_z, var_z 
 		
+	
+def calculate_sunearth_line(x_3d, y_3d, z_3d, var_3d):
+	'''This will correctly calculate the Earth-Sun line data along the x axis. 
+	
+	Parameters
+	----------
+	x_3d - 3D array of x positions
+	y_3d - 3D array of y positions
+	z_3d - 3D array of z positions 
+	var_3d - 3D array of data (e.g emissivity)
+	
+	Returns
+	-------
+	xp_mean - 1D array of x positions along x axis. 
+	yp_mean - 1D array of y positions along x axis. 
+	zp mean - 1D array of z positions along x axis. 
+	varp_mean - 1D array of var values along x axis. 
+	
+	'''
+	
+	#Get lowest positive y value and highest negative y value. 
+	i_yl = np.where(y_3d[0,:,0] < 0, y_3d[0,:,0], -np.inf).argmax()
+	i_yu = np.where(y_3d[0,:,0] > 0, y_3d[0,:,0], np.inf).argmin()
+	
+	#Get lowest positive z value and highest negative z value. 
+	i_zl = np.where(z_3d[:,0,0] < 0, z_3d[:,0,0], -np.inf).argmax()
+	i_zu = np.where(z_3d[:,0,0] > 0, z_3d[:,0,0], np.inf).argmin()
+	
+	#Get mean x values. 
+	xp_1 = x_3d[i_zl,i_yl]
+	xp_2 = x_3d[i_zl,i_yu]
+	xp_3 = x_3d[i_zu,i_yl]
+	xp_4 = x_3d[i_zu,i_yu]
+	xp_mean = (xp_1+xp_2+xp_3+xp_4)/4.
+	
+	#Get mean y values. 
+	yp_1 = y_3d[i_zl,i_yl]
+	yp_2 = y_3d[i_zl,i_yu]
+	yp_3 = y_3d[i_zu,i_yl]
+	yp_4 = y_3d[i_zu,i_yu]
+	yp_mean = (yp_1+yp_2+yp_3+yp_4)/4.
+	
+	#Get mean z values. 
+	zp_1 = z_3d[i_zl,i_yl]
+	zp_2 = z_3d[i_zl,i_yu]
+	zp_3 = z_3d[i_zu,i_yl]
+	zp_4 = z_3d[i_zu,i_yu]
+	zp_mean = (zp_1+zp_2+zp_3+zp_4)/4.
+	
+	#Get mean z values. 
+	varp_1 = var_3d[i_zl,i_yl]
+	varp_2 = var_3d[i_zl,i_yu]
+	varp_3 = var_3d[i_zu,i_yl]
+	varp_4 = var_3d[i_zu,i_yu]
+	varp_mean = (varp_1+varp_2+varp_3+varp_4)/4.
+	
+	return xp_mean, yp_mean, zp_mean, varp_mean 

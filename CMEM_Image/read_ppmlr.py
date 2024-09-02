@@ -234,28 +234,16 @@ class read_ppmlr_cube():
         
         '''
 
-        
+        #Get meridian data for etad. 
+        xp_y, yp_y, zp_y, etad_y, xp_z, yp_z, zp_z, etad_z = gm.calculate_meridian_planes(self.x_3d, self.y_3d, self.z_3d, self.eta_3d)
 
-        # Get slice with constant y. 
-        i_y = self.n[1]//2
-        xp_y = self.x_3d[:,i_y]
-        yp_y = self.y_3d[:,i_y]
-        zp_y = self.z_3d[:,i_y]
-        etad_y = self.eta_3d[:,i_y]
-        plane_value_y = self.y_3d[0,i_y,0]
 
         # Calculate log10 eta values. If eta = 0, set log(eta) = vmin  
         letad_y = np.zeros(etad_y.shape)+vmin
         i = np.where(etad_y != 0)
         letad_y[i] = np.log10(etad_y[i])
 
-        # Get slice with constant z. 
-        i_z = self.n[2]//2
-        xp_z = self.x_3d[i_z]
-        yp_z = self.y_3d[i_z]
-        zp_z = self.z_3d[i_z]
-        etad_z = self.eta_3d[i_z]
-        plane_value_z = self.z_3d[i_z,0,0]
+
 
          # Calculate log10 eta values. If eta = 0, set log(eta) = vmin 
         letad_z = np.zeros(etad_z.shape)+vmin
@@ -281,7 +269,7 @@ class read_ppmlr_cube():
         cont1 = ax1.contourf(xp_y, zp_y, letad_y, cmap='hot', levels=levels, vmin=vmin, vmax=vmax)
         ax1.set_xlabel('X [RE]')
         ax1.set_ylabel('Z [RE]')
-        ax1.set_title("Y = {:.2f}".format(plane_value_y))
+        ax1.set_title("XZ Plane")
         ax1.set_aspect("equal")
 
         # Add sketch of the Earth on top. 
@@ -291,7 +279,7 @@ class read_ppmlr_cube():
         cont2 = ax2.contourf(xp_z, yp_z, letad_z, cmap='hot', levels=levels, vmin=vmin, vmax=vmax)
         ax2.set_xlabel('X [RE]')
         ax2.set_ylabel('Y [RE]')
-        ax2.set_title("Z = {:.2f}".format(plane_value_z))
+        ax2.set_title("XY Plane")
         ax2.set_aspect("equal")
 
         # Add colourbar and earth. 
