@@ -242,13 +242,17 @@ class read_ppmlr_cube():
         letad_y = np.zeros(etad_y.shape)+vmin
         i = np.where(etad_y != 0)
         letad_y[i] = np.log10(etad_y[i])
-
+        j = np.where(letad_y < vmin)
+        letad_y[j] = vmin 
 
 
          # Calculate log10 eta values. If eta = 0, set log(eta) = vmin 
         letad_z = np.zeros(etad_z.shape)+vmin
         i = np.where(etad_z != 0)
         letad_z[i] = np.log10(etad_z[i])
+        j = np.where(letad_z < vmin)
+        letad_z[j] = vmin 
+
 
         # Create a filename label so you know which file you plotted. 
         file_label = self.filename.split("/")[-1]
