@@ -12,7 +12,10 @@ from . import visualise_image_fit
 from . import analyse_target_variation 
 from . import analyse_pixel_variation 
 from . import analyse_orbit_variation
+from . import analyse_density_variation
+from . import analyse_tilt_variation
 from . import get_meridians
+from . import smile_fov_limb 
 
 import os 
 # This is a backup to set the environment variables if they haven't been set externally. 

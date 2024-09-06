@@ -359,7 +359,7 @@ class fit_image():
 				self.model_los_intensity[i][j] = ((1/(4*np.pi))*self.trapezium_rule(self.smile.p_spacing, self.eta_model[i][j]))*637100
 				
 
-	def write_pickle(self, savetag=""):
+	def write_pickle(self, savetag="", fname=None):
 		'''This will create a pickle file of all the information that would be needed for plotting.
 		This is to save an object already created. 
         
@@ -369,7 +369,8 @@ class fit_image():
 		# Name and locate the pickle file. 
 		pickle_path = os.environ.get("PICKLE_PATH")
         
-		fname = "fit_image_n_{}_SMILE_{:.2f}_{:.2f}_{:.2f}_Target_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_{}_{}_im{}_{}.pkl".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], self.smile.n_pixels, self.smile.m_pixels, self.current_model, self.cost_func, self.init_method, savetag)
+		if fname is None:
+			fname = "fit_image_n_{}_SMILE_{:.2f}_{:.2f}_{:.2f}_Target_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_{}_{}_im{}_{}.pkl".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], self.smile.n_pixels, self.smile.m_pixels, self.current_model, self.cost_func, self.init_method, savetag)
 
 		# Add all the desired information to a dictionary. 
 		pickle_dict = {
