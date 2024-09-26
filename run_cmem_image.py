@@ -1,5 +1,9 @@
 #This file will run the code to produce an image through a PPMLR emissivity cube.  
-#It's what you would type in ipython3. 
+#It's what you would type in ipython3.
+#import astropy
+#print (astropy.__file__)
+#import spacepy 
+#print (spacepy.__file__)
 import CMEM_Image
 
 #To run the smile object and get the FOV 
@@ -10,7 +14,7 @@ model_image = CMEM_Image.sim_image.image_sim(smile, model="cmem", init_method=2,
 model_image.plot_image() 
 
 #To get the ppmlr data. 
-ppmlr = CMEM_Image.read_ppmlr.read_ppmlr_cube(filename="S05D05V400B0000-05rad.dat")
+ppmlr = CMEM_Image.ppmlr_fits.read_ppmlr_fits(filename="S05D05V400B0000-05rad.fits")
 
 #To get an image through the ppmlr datacube. 
 ppmlr_image = CMEM_Image.ppmlr_image.ppmlr_image(ppmlr, smile) 

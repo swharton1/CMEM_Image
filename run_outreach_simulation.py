@@ -34,11 +34,11 @@ sim_folder = 'sim3/'
 #orbit_folder_name = "ra{}_rp{}_inc{}_raan{}_omega{}/".format(rp, ra, inc, raan, omega) 
 plot_path = os.path.join(os.environ.get("PLOT_PATH"), 'outreach_sim/')
 #if not os.path.isdir(os.path.join(plot_path, orbit_folder_name)):
-#	print ('Making folder {}:'.format(os.path.join(plot_path, orbit_folder_name))) 
-#	os.mkdir(os.path.join(plot_path, orbit_folder_name)) 
+#    print ('Making folder {}:'.format(os.path.join(plot_path, orbit_folder_name))) 
+#    os.mkdir(os.path.join(plot_path, orbit_folder_name)) 
 if not os.path.isdir(os.path.join(plot_path, sim_folder)):
-	print ('Making folder {}:'.format(os.path.join(plot_path, sim_folder))) 
-	os.mkdir(os.path.join(plot_path, sim_folder))
+    print ('Making folder {}:'.format(os.path.join(plot_path, sim_folder))) 
+    os.mkdir(os.path.join(plot_path, sim_folder))
 full_path = os.path.join(plot_path, sim_folder)
 
 #Set the parameters for the image. 
@@ -48,20 +48,20 @@ target_loc=(9,0,0)
 
 #Loop through all points on the orbit. 
 for i in range(len(rv)):
-	print ('Image = ',i)
-	smile = CMEM_Image.smile_fov.smile_fov(n_pixels=n_pixels, m_pixels=m_pixels, theta_fov=27, phi_fov=16, smile_loc=(xv[i], yv[i], zv[i]), target_loc=target_loc)
-	
-	#Create CMEM image. 
-	image = CMEM_Image.sim_image.image_sim(smile, model='cmem', density=20)
-	
-	#If you want to plot the whole space. 
-	image.get_emissivity_all_coords()
-	
-	#Use outreach_plot1 for just FOV. outreach_plot2 for whole space. 
-	image.outreach_plot2(colour_cap=2, elev=45, azim=45, cmap='bone', fname=full_path+'sim2_{:0>2d}.png'.format(i), max_alpha=0.3)
-	
-	plt.close("all")
+    print ('Image = ',i)
+    smile = CMEM_Image.smile_fov.smile_fov(n_pixels=n_pixels, m_pixels=m_pixels, theta_fov=27, phi_fov=16, smile_loc=(xv[i], yv[i], zv[i]), target_loc=target_loc)
+    
+    #Create CMEM image. 
+    image = CMEM_Image.sim_image.image_sim(smile, model='cmem', density=20)
+    
+    #If you want to plot the whole space. 
+    image.get_emissivity_all_coords()
+    
+    #Use outreach_plot1 for just FOV. outreach_plot2 for whole space. 
+    image.outreach_plot2(colour_cap=2, elev=45, azim=45, cmap='bone', fname=full_path+'sim2_{:0>2d}.png'.format(i), max_alpha=0.3)
+    
+    plt.close("all")
 
 
-	
+    
 

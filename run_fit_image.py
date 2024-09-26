@@ -14,7 +14,7 @@ target_loc=(5,0,5)
 smile = CMEM_Image.smile_fov.smile_fov(n_pixels=n_pixels, m_pixels=m_pixels, theta_fov=27, phi_fov=16, smile_loc=smile_loc, target_loc=target_loc) 
 
 #Get the PPMLR Object. 
-ppmlr = CMEM_Image.read_ppmlr.read_ppmlr_cube(filename="S05D20V400B0000-05rad.dat")
+ppmlr = CMEM_Image.ppmlr_fits.read_ppmlr_fits(filename="S05D20V400B0000-05rad.fits")
 
 #To get an image through the ppmlr datacube. 
 ppmlr_image = CMEM_Image.ppmlr_image.ppmlr_image(ppmlr, smile) 

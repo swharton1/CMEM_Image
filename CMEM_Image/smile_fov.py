@@ -182,7 +182,7 @@ class smile_fov():
         ax.view_init(elev,azim) 
     
         self.fig = fig 
-    	
+        
     def plot_LOS_vectors(self, elev=45, azim=45):
         '''This will plot the LOS vectors from the spacecraft position.'''
 
@@ -207,7 +207,7 @@ class smile_fov():
        
     def add_earth(self, ax):
         '''This will add a sphere for the Earth. '''
-		
+        
         #Create a spherical surface. 
         radius = 1
         u = np.linspace(0, 2*np.pi, 100) 

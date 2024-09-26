@@ -102,7 +102,7 @@ def get_lin_coeffs(dipole, pd, pm, bz):
         r0_lin = 12.544*((pd+pm)**-0.194)*(1 + 0.305*((np.exp(0.0573*bz) -1 )/(np.exp(2.178*bz) + 1)))
         
         return a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin 
-		
+        
 def get_model_func(current_model):
         '''This will select the correct function for the desired model. '''
         

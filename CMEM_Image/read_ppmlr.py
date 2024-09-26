@@ -185,7 +185,7 @@ class read_ppmlr_cube():
     
     def get_subsolar_magnetopauses(self):
         '''This will get a few definitions of the subsolar magnetopause.'''
-		
+        
         # For the slice with constant y. 
         y_uniq = abs(self.y_3d[0,:,0])
         i_y = np.where(y_uniq == min(y_uniq))[0][0]
@@ -218,7 +218,7 @@ class read_ppmlr_cube():
         # Get f=0.25 
         dr = xp[ix_index] - xp[dix_index]
         self.f = xp[dix_index] + 0.25*dr[0] 
-		
+        
     
     def plot_both_planes(self, cmap="hot", levels=100, vmin=-8, vmax=-4, save=False, savetag=""):
         '''This will plot in the X-Z and X-Y planes side by side. 
@@ -318,7 +318,7 @@ class read_ppmlr_cube():
         xval2 = np.append(r*np.cos(theta2*(np.pi/180)),0)
         yval2 = np.append(r*np.sin(theta2*(np.pi/180)),0)
         verts2 = [[xval2[i],yval2[i]] for i in range(len(xval2))]
-		
+        
         polygon2 = Polygon(verts2, closed=True, edgecolor='navy', facecolor='navy', alpha=1) 
         ax.add_patch(polygon2)
 
