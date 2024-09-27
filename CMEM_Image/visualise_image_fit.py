@@ -12,7 +12,7 @@ class analyse_fit():
     '''This class will contain the plotting functions that 
     the CMEM/visualise_models.py analysis class used.'''
     
-    def __init__(self, filename='fit_image_n_5.0_SMILE_10.00_-30.00_0.00_Target_10_0_0_nxm_100_50_cmem_absolute_im2_.pkl', model='cmem'): 
+    def __init__(self, filename='target/fit_image_n_20.0_SMILE_6.57_-5.94_17.33_Target_10.00_0.00_0.00_nxm_100_50_cmem_absolute_im2_.pkl', model='cmem'): 
         '''This takes in the filename for the pickle file.''' 
         
         
@@ -102,6 +102,39 @@ class analyse_fit():
             pickle_dict = pickle.load(f)
         return pickle_dict
     
+    def trapezium_rule(self, p_spacing, eta_LOS):
+        '''This will integrate a function using the trapezium rule. '''
+
+        return (p_spacing/2)*(eta_LOS[0] + eta_LOS[-1] + 2*sum(eta_LOS[1:-1]))
+        
+    def convert_xyz_to_shue_coords(self, x, y, z):
+        '''This will convert the x,y,z coordinates to those used in the Shue model 
+        of the magnetopause and bowshock. 
+
+        Parameters
+        ----------
+        x, y, z - now 3D.  
+
+        Returns
+        -------
+        r, theta (rad) and phi (rad)
+        '''
+
+        # r 
+        r = (x**2 + y**2 + z**2)**0.5
+        
+        # theta - only calc. where coordinate singularities won't occur. 
+        theta = np.zeros(r.shape)
+        i = np.where(r != 0)
+        theta[i] =  np.arccos(x[i]/r[i])
+
+        # phi - only calc. where coordinate singularities won't occur. 
+        phi = np.zeros(r.shape)
+        j = np.where((y**2 + z**2) != 0)
+        phi[j] = np.arccos(y[j]/((y[j]**2 + z[j]**2)**0.5))
+        
+        return r, theta, phi
+        
     def convert_shue_to_xyz_coords(self, r, theta, phi):
         '''This will convert the Shue coordinates back to xyz coordinates. 
         
@@ -529,8 +562,154 @@ class analyse_fit():
                 #You need the full path here. 
                 fig.savefig(self.plot_path+fname)
         self.fig_param = fig 
+    
+    def plot_images_sequence(self, cmap='hot', los_max=60):
+        '''This will plot the CMEM image alongside the PPMLR image, but one figure after another. The images can then be stitched together into a gif.'''
         
+        import matplotlib.animation as animation 
+        
+        # Make pixel arrays for plotting. 
+        i_array = np.linspace(0,self.model['n_pixels'], self.model['n_pixels']+1)-0.5
+        j_array = np.linspace(0,self.model['m_pixels'], self.model['m_pixels']+1)-0.5
+        
+        J, I = np.meshgrid(j_array, i_array)
+        
+        #Convert to degrees. 
+        theta_pixels = - (self.model['theta_fov']/2.) + (self.model['theta_fov']/self.model['n_pixels'])*(I+0.5)
+        phi_pixels = -(self.model['phi_fov']/2.) + (self.model['phi_fov']/self.model['m_pixels'])*(J+0.5)
+        
+        #Convert to degrees. Minus sign is so you look away from camera, not towards. 
+        theta_pixels = -np.rad2deg(theta_pixels)
+        phi_pixels = -np.rad2deg(phi_pixels)
+        
+        #Make initial figure. 
+        plt.close("all")
+        fig = plt.figure(figsize=(8,5))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+        fig.subplots_adjust(left=0.10, wspace=0.5, bottom=0.20) 
+    
+        #Add the PPMLR image, which is always the same. 
+        mesh1 = ax1.pcolormesh(phi_pixels, theta_pixels, self.model['ppmlr los intensity'], cmap=cmap, vmin=0, vmax=los_max)
+        
+        ax1.set_title("PPMLR Image from SMILE\nSMILE = ({:.2f},{:.2f},{:.2f}), Target = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+        ax1.set_xlabel('deg')
+        ax1.set_ylabel('deg')
+        ax1.set_aspect('equal')
+        
+        cbar1 = plt.colorbar(mesh1, ax=ax1, shrink=0.8)
+        cbar1.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
+        
+        #Add on subsolar magnetopause position for PPMLR. 
+        fig.text(0.42, 0.2, r"$r_0$"+" = {:.2f}".format(self.model['maxIx'])+r"$ R_E$", ha='center')
             
+        #Now we need to add on the initial model image. 
+        
+        #LOS coords in cartesian. 
+        x = self.model['xpos']
+        y = self.model['ypos']
+        z = self.model['zpos'] 
+        
+        #LOS coords in Shue. 
+        self.r, self.theta, self.phi = self.convert_xyz_to_shue_coords(x, y, z) 
+        
+        #Get the Lin coefficients and initial emissivity. 
+        self.lin_coeffs = bef.get_lin_coeffs(self.model['dipole'], self.model['pdyn'], self.model['pmag'], self.model['bz'])
+        self.current_func = bef.get_model_func('cmem')
+        eta_model_init = self.current_func(self.r, self.theta, self.phi, *self.lin_coeffs, *self.model['params0'])
+        
+        #Calculate the LOS intensity. 
+        los_intensity_init = np.zeros((self.model['n_pixels'], self.model['m_pixels']))
+        
+        # For each pixel: 
+        for i in range(self.model['n_pixels']):
+            for j in range(self.model['m_pixels']):
+            
+                #Added unit conversion factor from ev.RE to kev.cm
+                los_intensity_init[i][j] = ((1/(4*np.pi))*self.trapezium_rule(0.5, eta_model_init[i][j]))*637100
+                
+        #Now add the model image. 
+        mesh2 = ax2.pcolormesh(phi_pixels, theta_pixels, los_intensity_init, cmap=cmap, vmin=0, vmax=los_max)
+        if self.inout == 'out':
+            ax2.set_title("{} Image from SMILE\nSMILE is outside MP".format(self.image_tag), fontsize=10)
+        else:
+            ax2.set_title("{} Image from SMILE\nSMILE is inside MP".format(self.image_tag), fontsize=10)
+        
+        ax2.set_xlabel('deg')
+        ax2.set_ylabel('deg')
+        ax2.set_aspect('equal')
+        cbar2 = plt.colorbar(mesh2, ax=ax2, shrink=0.8)
+        cbar2.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
+        
+        #Get initial subsolar magnetopause position for CMEM. 
+        rmp_cmem = bef.lin_scaled_func(0, 0, *self.lin_coeffs, p0=self.model['params0'][0], p1=self.model['params0'][7], p2=self.model['params0'][8], p3=self.model['params0'][9]) 
+        rmp_text = fig.text(0.90, 0.2, r"$r_0$"+" = {:.2f}".format(rmp_cmem)+r" $R_E$", ha='center')
+        
+        
+        # Add a label to show the model parameters. 
+        label = ""
+        info = gnau.get_parameter_info(model='cmem')
+        parameter_names = [info[i][0] for i in info.keys()]
+        parameter_units = [info[i][1] for i in info.keys()]
+        for p,pval in enumerate(self.model['params0']):
+                label += "{}={} {}, ".format(parameter_names[p], self.sig_figs(pval,3), parameter_units[p])
+                if len(parameter_names)//2 == p+1:
+                    label += "\n"
+        
+        labeltext = fig.text(0.5, 0.02, label, ha='center')
+        
+        self.mesh2 = mesh2
+        
+        def update(frame):
+            '''This will update the CMEM image for each frame using the next set of parameters.'''
+            
+            #Recalculate emissivity. 
+            new_params = tuple(self.model['param list'][frame])
+            print ('Frame = ', frame)
+            new_eta = self.current_func(self.r, self.theta, self.phi, *self.lin_coeffs, *new_params)
+            
+            #Recalculate LOS intensity. 
+            new_los_intensity = np.zeros((self.model['n_pixels'], self.model['m_pixels']))
+            
+            # For each pixel: 
+            for i in range(self.model['n_pixels']):
+                for j in range(self.model['m_pixels']):
+            
+                    #Added unit conversion factor from ev.RE to kev.cm
+                    new_los_intensity[i][j] = ((1/(4*np.pi))*self.trapezium_rule(0.5, new_eta[i][j]))*637100
+            
+            #Reset data in mesh2 object. 
+            mesh2.set(array = new_los_intensity)
+            
+            #Update subsolar magnetopause distance from CMEM. 
+            rmp_cmem = bef.lin_scaled_func(0, 0, *self.lin_coeffs, p0=new_params[0], p1=new_params[7], p2=new_params[8], p3=new_params[9])
+            rmp_label = r"$r_0$"+" = {:.2f}".format(rmp_cmem)+r" $R_E$"
+            rmp_text.set_text(rmp_label)
+            
+            #Update the label too. 
+            label = "" 
+            for p,pval in enumerate(new_params):
+                label += "{}={} {}, ".format(parameter_names[p], self.sig_figs(pval,3), parameter_units[p])
+                if len(parameter_names)//2 == p+1:
+                    label += "\n"
+            labeltext.set_text(label)
+            
+            return mesh2, rmp_text, labeltext 
+        
+        #Now make the animation. 
+        ani = animation.FuncAnimation(fig=fig, func=update,  frames=len(self.model['param list']), interval=20) 
+        ani.save(self.plot_path+'fitting_animation.gif')
+        #plt.show()    
+            
+        
+        
+        
+        
+        
+        
+        
+        
+                    
     def add_fov_boundaries(self, ax2):
         '''This will add the FOV boundaries in black. '''
         
