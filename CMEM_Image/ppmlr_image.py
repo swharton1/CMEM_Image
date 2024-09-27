@@ -31,6 +31,7 @@ class ppmlr_image():
         #Calculate the LOS intensity that forms the image. 
         self.calc_model_image()
         
+        self.plot_path = os.environ.get("PLOT_PATH") 
     
     def calc_dynamic_pressure(self):
         '''Calculate this as it's a parameter in some models.'''
@@ -190,6 +191,31 @@ class ppmlr_image():
                 #Added unit conversion factor from ev.RE to kev.cm
                 self.los_intensity[i][j] = ((1/(4*np.pi))*self.trapezium_rule(self.smile.p_spacing, self.peta[i][j]))*637100
     
+    def calc_model_image_sections(self, r_bounds = [0,8,16,24,32,40]):
+        '''This will create a set of images of the emission from different distances, like Andy's code.'''
+        
+        print ("Calculating LOS intensity for a range of distances...")
+        
+        self.r_bounds = r_bounds
+        
+        self.los_intensity_sections = np.zeros((len(self.r_bounds)-1, self.smile.n_pixels, self.smile.m_pixels)) 
+        
+        #Loop through each section. 
+        for r in range(len(self.r_bounds)-1):
+            
+            # For each pixel: 
+            for i in range(self.smile.n_pixels):
+                for j in range(self.smile.m_pixels):
+                    
+                    #Filter to just use emissivities in this range. 
+                    idx1 = int(self.r_bounds[r]/self.smile.p_spacing)
+                    idx2 = int(self.r_bounds[r+1]/self.smile.p_spacing)
+                    
+                    #Added unit conversion factor from ev.RE to kev.cm
+                    self.los_intensity_sections[r][i][j] = ((1/(4*np.pi))*self.trapezium_rule(self.smile.p_spacing, self.peta[i][j][idx1:idx2]))*637100
+    
+    
+    
     #PLOTTING FUNCTIONS 
     ###################
     
@@ -293,14 +319,85 @@ class ppmlr_image():
                     
         #Save the image to a standard name. 
         if image_name is None: 
-            plot_path = os.environ.get("PLOT_PATH") 
+            
         
-            fig.savefig(plot_path+"PPMLR_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
+            fig.savefig(self.plot_path+"PPMLR_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
         
         else:
             fig.savefig(image_name) 
     
+    def plot_image_sections(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, los_max=None, image_name=None, ellipse=None, save=False, savetag=''):
+        '''This will plot the series of images created from emission at different distances, plus the total 
+        at the bottom. Akin to Andy Read's code. 
         
+        Parameters
+        ----------
+        elev - viewing elevation in degrees for 3d viewing model
+        azim - viewing azimuth in degrees for 3d viewing model 
+        cmap - colourmap
+        vmin - min emissivity on colour bar (logged)
+        vmax - max emissivity on colour bar (logged)
+        levels - number of levels on contour maps
+        colour_cap - order of magnitude above vmin to start plotting emissivity 
+        los_max - max los intensity on colourbar
+        image_name - will default to standard name if not specified. must be full path
+        ellipse - ellipse object if you wish to add orbit ellipse. 
+        
+        '''
+        
+        plt.close("all") 
+        fig = plt.figure(figsize=(8,8))
+        fig.subplots_adjust(left=0.10, wspace=0.3, bottom=0.10) 
+        
+        n_axes = len(self.r_bounds) 
+        rows = n_axes/2
+        
+        # Make pixel arrays for plotting. 
+        i_array = np.linspace(0,self.smile.n_pixels, self.smile.n_pixels+1)-0.5
+        j_array = np.linspace(0,self.smile.m_pixels, self.smile.m_pixels+1)-0.5
+        
+        J, I = np.meshgrid(j_array, i_array)
+        
+        #Convert to degrees. 
+        theta_pixels = - (self.smile.theta_fov/2.) + (self.smile.theta_fov/self.smile.n_pixels)*(I+0.5)
+        phi_pixels = -(self.smile.phi_fov/2.) + (self.smile.phi_fov/self.smile.m_pixels)*(J+0.5)
+        
+        #Convert to degrees. Minus sign is so you look away from camera, not towards. 
+        theta_pixels = -np.rad2deg(theta_pixels)
+        phi_pixels = -np.rad2deg(phi_pixels)
+        
+        # Get contour levels. 
+        levels = np.linspace(vmin, vmax, levels+1)
+    
+        print (n_axes)
+        for n in range(n_axes):
+            #print (n, self.r_bounds[n], n%3, n//3)
+            ax = fig.add_subplot(int(n_axes/rows), int(rows), n+1)
+            if n == n_axes-1:
+                #Do the total image. 
+                mesh = ax.pcolormesh(phi_pixels, theta_pixels, self.los_intensity, cmap=cmap, vmin=0, vmax=los_max*3)
+                ax.set_title("{} < r < {}".format(0, self.smile.p_max))
+                
+            else: 
+                #Do the sections images. 
+                mesh = ax.pcolormesh(phi_pixels, theta_pixels, self.los_intensity_sections[n], cmap=cmap, vmin=0, vmax=los_max)
+                ax.set_title("{} < r < {}".format(self.r_bounds[n],self.r_bounds[n+1]))
+            
+            #Add customisation to the plot. 
+            if n//3 == 1: ax.set_xlabel('deg')
+            if n%3 == 0 : ax.set_ylabel('deg')
+            ax.set_aspect('equal')
+            cbar = plt.colorbar(mesh, ax=ax, shrink=0.8)
+            if n%3 == int(n_axes/rows): cbar.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
+    
+        #Add title with information about FOV and simulation. 
+        fig.text(0.5, 0.95, 'n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({:.2f},{:.2f},{:.2f}),   Aim Point: ({},{},{})'.format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]), ha='center', va='top', fontsize=12)
+    
+        if save:
+            print ('Saved to: ', self.plot_path+'PPMLR_Image_Sections_n_{:.1f}_SMILE_({:.2f},{:.2f},{:.2f})_Target_({:.2f},{:.2f},{:.2f})_{}.png'.format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], savetag))  
+            fig.savefig(self.plot_path+'PPMLR_Image_Sections_n_{:.1f}_SMILE_({:.2f},{:.2f},{:.2f})_Target_({:.2f},{:.2f},{:.2f})_{}.png'.format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], savetag))
+    
+       
     def add_fov_boundaries(self, ax2):
         '''This will add the FOV boundaries in black. '''
         

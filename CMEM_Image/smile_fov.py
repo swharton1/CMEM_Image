@@ -48,6 +48,10 @@ class smile_fov():
             p = target_loc - self.smile_loc
             self.sxi_theta = np.arccos(p[2]/((p[0]**2 + p[1]**2 + p[2]**2)**0.5))
             self.sxi_phi = np.arctan2(p[1], p[0])
+        else:
+            pass
+            #target loc is just used to get sxi_theta and sxi_phi. If target_loc is not set, there is no 
+            #guarantee it lies along the x axis. 
         self.target_loc = np.array(target_loc) 
         
         ts = process_time()
