@@ -108,6 +108,9 @@ class read_ppmlr_fits():
         except (FileNotFoundError, IOError):
             print ("Filename not found: {}".format(self.filename))
 
+        #Get estimations of subsolar magnetopause values. 
+        self.get_subsolar_magnetopauses()
+        
     def __repr__(self):
         return ("Class to read in the PPMLR emissivity cube from the fits file: {}".format(self.filename))
 
@@ -146,7 +149,43 @@ class read_ppmlr_fits():
         mag_pressure = mag_pressure*1000000000
 
         return mag_pressure
+    
+    def get_subsolar_magnetopauses(self):
+        '''This will get a few definitions of the subsolar magnetopause.'''
         
+        # For the slice with constant y. 
+        y_uniq = abs(self.y_3d[0,:,0])
+        i_y = np.where(y_uniq == min(y_uniq))[0][0]
+
+        # For the slice with constant z. 
+        z_uniq = abs(self.z_3d[:,0,0])
+        i_z = np.where(z_uniq == min(z_uniq))[0][0]
+
+        # Get data along sun-earth line. 
+        xp = self.x_3d[i_z,i_y]
+        yp = self.y_3d[i_z,i_y]
+        zp = self.z_3d[i_z,i_y]
+        etad = self.eta_3d[i_z,i_y]
+        
+        # Get max Ix second. 
+        ix_index = np.where(etad == etad.max())
+        self.maxIx = xp[ix_index][0]
+        
+        # Get max dIx third. 
+        # Get difference between etad values. 
+        dIx = np.array([etad[i+1] - etad[i] for i in range(len(etad) - 1)])
+
+        # Get centre point positions for radial direction. 
+        xp_cent = xp + (xp[1]-xp[0])/2
+        xp_cent = xp_cent[0:-1]
+
+        dix_index = np.where(dIx == dIx.max())
+        self.maxdIx = xp[dix_index][0]
+
+        # Get f=0.25 
+        dr = xp[ix_index] - xp[dix_index]
+        self.f = xp[dix_index] + 0.25*dr[0] 
+           
     def plot_both_planes(self, cmap="hot", levels=100, vmin=-8, vmax=-4, save=False, savetag=""):
         '''This will plot in the X-Z and X-Y planes side by side. 
         

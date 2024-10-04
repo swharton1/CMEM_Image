@@ -13,6 +13,9 @@ smile_loc=(6.57,-5.94,17.33)
 target_loc=(5,0,5)
 smile = CMEM_Image.smile_fov.smile_fov(n_pixels=n_pixels, m_pixels=m_pixels, theta_fov=27, phi_fov=16, smile_loc=smile_loc, target_loc=target_loc) 
 
+#With viewing constraints. 
+smile = CMEM_Image.smile_fov_limb.smile_limb(n_pixels=n_pixels, m_pixels=m_pixels, theta_fov=27, phi_fov=16, smile_loc=smile_loc)
+
 #Get the PPMLR Object. 
 ppmlr = CMEM_Image.ppmlr_fits.read_ppmlr_fits(filename="S05D20V400B0000-05rad.fits")
 
