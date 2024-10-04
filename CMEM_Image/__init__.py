@@ -4,6 +4,7 @@ from . import boundary_emissivity_functions
 from . import sim_image 
 from . import get_names_and_units
 from . import set_initial_params
+from . import ppmlr_image_old
 from . import ppmlr_image
 from . import ellipse
 from . import ellipse2

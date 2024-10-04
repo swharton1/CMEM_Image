@@ -3,7 +3,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from scipy.interpolate import interpn 
 
 class ppmlr_image():
     '''This class takes in the ppmlr simulation object and the smile fov object and calculates an image through the simulation.'''
@@ -27,7 +26,7 @@ class ppmlr_image():
         self.pmag = self.calc_magnetic_pressure()
         
         #Calculate the emissivity along the LOS. 
-        self.get_eta_in_fov()
+        self.get_weighted_eta_in_fov()
         
         #Calculate the LOS intensity that forms the image. 
         self.calc_model_image()
@@ -71,44 +70,104 @@ class ppmlr_image():
         
     #THIS CODE WILL WORK OUT THE EMISSIVITY ALONG THE LOS FROM THE PPMLR MODEL.
     ###########################################################################
-    def get_eta_in_fov(self):
-        '''This will be a new method to do it using scipy's linear interpolation function. Should be cleaner and faster.''' 
-        
-        #Set up empty array to fill with interpolated emissivity values. 
-        self.peta = np.zeros((self.smile.xpos.shape))
-        
-        #You will need this for interpn. 
-        self.points_original = (self.ppmlr.z, self.ppmlr.y, self.ppmlr.x) 
-        
-        #Define edges of cube. 
-        self.xmin = self.ppmlr.x.min()
-        self.xmax = self.ppmlr.x.max()
-        self.ymin = self.ppmlr.y.min()
-        self.ymax = self.ppmlr.y.max()
-        self.zmin = self.ppmlr.z.min()
-        self.zmax = self.ppmlr.z.max()
-        
-        
-        pxn = self.smile.xpos
-        pyn = self.smile.ypos
-        pzn = self.smile.zpos 
-        
-        #You should only do this on points inside the cube. 
-        inside = np.where((pxn < self.xmax) & (pxn > self.xmin) & (pyn < self.ymax) & (pyn > self.ymin) & (pzn < self.zmax) & (pzn > self.zmin))
-        
-        #Work out which points are outside the cube. 
-        outside = np.where((pxn >= self.xmax) | (pxn <= self.xmin) | (pyn >= self.ymax) | (pyn <= self.ymin) | (pzn >= self.zmax) | (pzn <= self.zmin)) 
-            
-        #You now need to setup the smile points in the correct format. 
-        new_points = (pzn[inside], pyn[inside], pxn[inside]) 
-        
-        #Calculate the interpolated emissivity values. 
-        self.peta[inside] = interpn(self.points_original, self.ppmlr.eta_3d, new_points, method='linear')
-        
-        #Set the values outside the cube to zero. 
-        self.peta[outside] = 0 
     
- 
+    def get_weighted_eta_in_fov(self):
+        '''This will get the weighted eta values for all points in the FOV. 
+        '''
+        
+        print ("Calculating emissivity from weighted average method...") 
+        #Loop through each pixel and each point along the LOS of each pixel. 
+        self.peta = np.zeros((self.smile.xpos.shape))
+        for i in range(self.smile.n_pixels):
+            print ("Pixel i = ", i)
+            for j in range(self.smile.m_pixels):
+                for p in range(self.smile.xpos[0][0].size):
+                    px = self.smile.xpos[i][j][p]
+                    py = self.smile.ypos[i][j][p]
+                    pz = self.smile.zpos[i][j][p]
+                    self.peta[i][j][p] = self.get_weighted_eta_single_value(px, py, pz)
+        
+        
+    def get_weighted_eta_single_value(self, px, py, pz):
+        '''This will get the nearest x, y and z values for a given point. 
+        
+        Parameters
+        ----------
+        px - x coordinate of point in Smile Fov
+        py - y coordinate of point in Smile Fov
+        pz - z coordinate of point in Smile Fov 
+        
+        Returns
+        -------
+        peta - weighted emissivity value for the coords (px, py, pz) 
+        
+        '''
+        
+        #If px, py or pz are outside the boundaries of the simulation, eta is zero. 
+        if (px < self.ppmlr.x[0]) or (px > self.ppmlr.x[-1]) or (py < self.ppmlr.y[0]) or (py > self.ppmlr.y[-1]) or (pz < self.ppmlr.z[0]) or (pz > self.ppmlr.z[-1]):
+            peta = 0 
+            return peta
+            
+        else: 
+            #It must be inside the cube.
+            
+            #Get the indices of x0, y0 and z0.  
+            ix = self.get_x0_x1(px) 
+            iy = self.get_y0_y1(py)
+            iz = self.get_z0_z1(pz) 
+            
+            #Get the x, y, z and eta values for the vertices. 
+            self.vert_x = self.ppmlr.x_3d[iz:iz+2, iy:iy+2, ix:ix+2]
+            self.vert_y = self.ppmlr.y_3d[iz:iz+2, iy:iy+2, ix:ix+2]
+            self.vert_z = self.ppmlr.z_3d[iz:iz+2, iy:iy+2, ix:ix+2]
+            self.etav = self.ppmlr.eta_3d[iz:iz+2, iy:iy+2, ix:ix+2]
+            
+            #Get the radial distances to each vertex. 
+            r_vertices = self.get_r_to_vertex(px, py, pz, self.vert_x, self.vert_y, self.vert_z)
+            
+            #Need to account for possibility (px,py,pz) is an exact 
+            #point in the ppmlr grid. 
+            if 0 in r_vertices:
+                peta = self.etav[r_vertices==0][0]
+            else:
+                #Get weights for each vertex.
+                weights = 1/r_vertices 
+                
+                #Calculate the weighted eta value for the coordinates (px, py, pz) 
+                peta = (weights*self.etav).sum()/weights.sum()
+            
+            return peta 
+    
+    def get_r_to_vertex(self, px, py, pz, vx, vy, vz):
+        '''This calculates the radial distance to a vertex. '''
+        
+        #r = np.sqrt((vertex[0]-px)**2 + (vertex[1]-py)**2 + (vertex[2]-pz)**2)
+        r = np.sqrt((vx-px)**2 + (vy-py)**2 + (vz-pz)**2)
+        return r 
+        
+        
+    def get_x0_x1(self, px):
+        '''This will get the index of x0'''
+        
+        diff = self.ppmlr.x - px
+        ix = diff[diff <= 0].argmax()    
+        return ix
+        
+        
+    def get_y0_y1(self, py):
+        '''This will get the index of y0'''
+            
+        diff = self.ppmlr.y - py
+        iy = diff[diff <= 0].argmax()    
+        return iy
+        
+        
+    def get_z0_z1(self, pz):
+        '''This will get the index of z0'''
+        
+        diff = self.ppmlr.z - pz
+        iz = diff[diff <= 0].argmax()    
+        return iz
         
     #THIS CODE WILL WORK OUT THE INTENSITY IMAGE
     ######################################################
@@ -119,7 +178,7 @@ class ppmlr_image():
         return (p_spacing/2)*(eta_LOS[0] + eta_LOS[-1] + 2*sum(eta_LOS[1:-1]))
     
     def calc_model_image(self):
-        '''This is the function that will actually work out the LOS intensities for the given spacecraft viewing direction.''' 
+        '''This is the function that will actually work out the emission and LOS intensities for the given spacecraft viewing direction.''' 
         
         print ("Calculating LOS intensity...") 
         #Calculate the LOS intensity. 
@@ -244,7 +303,19 @@ class ppmlr_image():
         ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({:.2f},{:.2f},{:.2f})\nAim Point: ({},{},{})'.format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]))
         ax2.set_aspect('equal')
         ax2.view_init(elev,azim) 
-
+        
+        # Add a label to show the model parameters. 
+        #label = ""
+        #info = gnau.get_parameter_info(model=self.current_model)
+        #parameter_names = [info[i][0] for i in info.keys()]
+        #parameter_units = [info[i][1] for i in info.keys()]
+        #for p,pval in enumerate(self.params0):
+        #        pv = pval 
+        #        label += "{}={} {}, ".format(parameter_names[p], self.sig_figs(pv,3), parameter_units[p])
+        #        if len(parameter_names)//2 == p+1:
+        #            label += "\n"
+        
+        #fig.text(0.5, 0.02, label, ha='center')
                     
         #Save the image to a standard name. 
         if image_name is None: 
