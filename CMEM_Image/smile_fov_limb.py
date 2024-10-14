@@ -9,7 +9,7 @@ class smile_limb():
     '''This object will use the spacecraft position and limb angle to work out the pointing and 
     target directions, along with everything else.''' 
     
-    def __init__(self, theta_fov=27, phi_fov=16, n_pixels=4, m_pixels=2, smile_loc=(0,-10,10), p_spacing=0.5, p_max=80, limb=20.5):
+    def __init__(self, theta_fov=27, phi_fov=16, n_pixels=4, m_pixels=2, smile_loc=(0,-10,10), p_spacing=0.5, p_max=80, limb=20.3):
         '''This takes in all the initial parameters 
         
         Parameters
@@ -44,13 +44,14 @@ class smile_limb():
         #Get earth angle. 
         self.r_angle = np.arcsin(1/self.smag) 
         
-        #Get combined limb, r angle and half FOV angle. 
-        self.limb_c = self.limb + self.r_angle + self.phi_fov/2.
+        #Get combined limb and r angle. 
+        #Added correction - 20.3 deg to centre of FOV, not edge. 
+        self.limb_c = self.limb + self.r_angle #+ self.phi_fov/2.
         
         #Get look direction vector. 
         self.get_look_direction()
         
-        #Get target vector. 
+        #Get target vector (aim). 
         self.target_loc = self.smile_loc + self.L 
         
         #Get b vector. 
@@ -292,7 +293,7 @@ class smile_limb():
         #Add Look vector. 
         ax.plot([self.smile_loc[0], self.smile_loc[0]+self.L[0]], [self.smile_loc[1], self.smile_loc[1]+self.L[1]], [self.smile_loc[2], self.smile_loc[2]+self.L[2]], 'r-', label='Look')
         
-        #Add Target vector. 
+        #Add Target vector (aim). 
         ax.plot([0, self.target_loc[0]], [0, self.target_loc[1]], [0, self.target_loc[2]], 'g-', label='Target') 
         
         #Add b vector. 
@@ -301,6 +302,8 @@ class smile_limb():
         #Add the FOV boundaries. 
         self.add_fov_boundaries(ax, lw=2) 
         
+        #Add title to show smile location. 
+        ax.set_title('SMILE: ({:.2f},{:.2f},{:.2f})\nAim: ({:.2f},{:.2f},{:.2f}) '.format(self.smile_loc[0], self.smile_loc[1], self.smile_loc[2], self.target_loc[0], self.target_loc[1], self.target_loc[2]))
         
         ax.set_xlabel('x')
         ax.set_ylabel('y')
