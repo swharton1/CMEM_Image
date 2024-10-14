@@ -91,15 +91,16 @@ for i in range(len(rv)):
         #To get an image through the ppmlr datacube. 
         ppmlr_image = CMEM_Image.ppmlr_image.ppmlr_image(ppmlr, smile)
         
+        #Get the filename of the pickle file. 
+        pkl_filename = 'orbit_lim/fit_image_n_{:.1f}_SMILE_limb_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_cmem_absolute_im2.pkl'.format(ppmlr.density, smile.smile_loc[0], smile.smile_loc[1], smile.smile_loc[2], n_pixels, m_pixels)
+        
         #Fit to the image. 
         fit = CMEM_Image.fit_model_image_to_ppmlr_image.fit_image(ppmlr_image, smile) 
         fit.fit_function_with_nelder_mead(model='cmem', init_method=2, params0=None, cost_func='absolute') 
-        fit.write_pickle()
+        fit.write_pickle(fname=pkl_filename)
         
-        #Get the filename of the pickle file. 
-        pkl_filename = 'orbit_lim/fit_image_n_{:.1f}_SMILE_limb_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_cmem_absolute_im2_.pkl'.format(ppmlr.density, smile.smile_loc[0], smile.smile_loc[1], smile.smile_loc[2], n_pixels, m_pixels)
         
-        figname = os.path.join("fitted_orbit_sim", orbit_folder_name, ppmlr_filename, "fit_image_n_{:.1f}_{:0>3d}_nxm_{}_{}_{}_{}_im{}{}_fov.png".format(ppmlr.density, i, smile.n_pixels, smile.m_pixels, 'cmem', 'absolute', 2, ''))
+        figname = os.path.join("fitted_orbit_sim_limb", orbit_folder_name, ppmlr_filename, "fit_image_n_{:.1f}_{:0>3d}_nxm_{}_{}_{}_{}_im{}{}_fov_corrected.png".format(ppmlr.density, i, smile.n_pixels, smile.m_pixels, 'cmem', 'absolute', 2, ''))
         
         #Now make the plots to show the output of the fitting process. 
         analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=pkl_filename, model='cmem')
@@ -128,7 +129,7 @@ for i in range(len(rv)):
         output_dict['tilt'].append(smile.sxi_tilt)    
             
 #Save the output from the full orbital run in a more convenient file. 
-rmp_output_file = "orbital_limb_output.pkl" 
+rmp_output_file = "orbital_limb_output_corrected.pkl" 
 output_fullpath = os.path.join(plot_path, orbit_folder_name, ppmlr_filename, rmp_output_file)
 
 

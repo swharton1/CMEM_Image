@@ -5,8 +5,9 @@ from datetime import datetime
 import os
 import pytz
 #import re
-from spacepy import coordinates as coord
-from spacepy.time import Ticktock 
+
+
+
 #import warnings
 #warnings.filterwarnings('error')
 from matplotlib.patches import Wedge, Polygon, Circle
@@ -28,7 +29,7 @@ class orbit():
         self.calc_gsm = calc_gsm
         
         #Read in the data. 
-        self.read_orbit_data(stime=self.stime, etime=self.etime, calc_gsm=self.calc_gsm)
+        self.read_orbit_data(stime=self.stime, etime=self.etime, calc_gsm_pygeopack=self.calc_gsm)
         
         
     def format_date(self, t,rdate=""):
@@ -112,14 +113,15 @@ class orbit():
     
         return readout
     
-    def read_orbit_data(self, stime=(2025,10,1), etime=(2025,10,2), calc_gsm=False):
+    def read_orbit_data(self, stime=(2025,10,1), etime=(2025,10,2), calc_gsm_spacepy=False, calc_gsm_pygeopack=True):
         '''This will read Yasir's function to just get the times I want.
     
         Parameters
         ----------
         stime - start time as a tuple (yyyy,mm,dd)
         etime - end time as a tuple (yyyy,mm,dd) 
-        calc_gsm - boolean to convert to GSM. If after 2025, it will use the previous year's date. 
+        calc_gsm_spacepy - boolean to convert to GSM. If after 2025, it will use the previous year's date. Uses spacepy. 
+        calc_gsm_pygeopack - boolean to convert to GSM. Uses PyGeopack. Don't use both!!!  
     
         Returns
         -------
@@ -132,9 +134,11 @@ class orbit():
         etime = dt.datetime(*etime)
 
         #Read the whole file in. 
+        print ('Reading in orbit file...') 
         orbit_file = '/data/sol-ionosphere/ys378/SMILE/smile_updated_ephemeris_gse_2025_2028.txt'
         data = self.load_ephemeris_vlocal(orbit_file) 
-    
+        self.data = data 
+        
         #Convert time column to datetime objects. 
         data['dtime'] = np.array([dt.datetime.strptime(t, "%Y-%m-%d %H:%M:%S+00:0") for t in data['time']])
     
@@ -147,11 +151,14 @@ class orbit():
         for k in data.keys():
             new_data[k] = data[k][i]
     
-        if calc_gsm: 
-        
+        if calc_gsm_spacepy: 
+            
+            from spacepy import coordinates as coord
+            from spacepy.time import Ticktock 
+
             #Convert these coordinates to GSM. 
             #Need coordinates in appropriate form for conversion.
-            print ('Convert coordinates to GSM...')
+            print ('Convert coordinates to GSM with spacepy...')
             coords_gse = np.zeros((new_data['x_gse'].size,3))
             coords_gse[:,0] = new_data['x_gse']
             coords_gse[:,1] = new_data['y_gse']
@@ -173,6 +180,18 @@ class orbit():
             new_data['y_gsm'] = coords_gsm.y
             new_data['z_gsm'] = coords_gsm.z 
         
+        if calc_gsm_pygeopack:
+            print ('Converting to GSM with PyGeopack...') 
+            import PyGeopack 
+            
+            #Sort the date out. 
+            date = np.int32([d.strftime("%Y%m%d") for d in new_data['dtime']]) 
+            
+            #Sort the time out. 
+            ut = np.float64([d.strftime("%Y%m%d") for d in new_data['dtime']]) 
+            
+            #Do the conversion. 
+            new_data['x_gsm'], new_data['y_gsm'], new_data['z_gsm'] = PyGeopack.Coords.GSEtoGSM(new_data['x_gse'], new_data['y_gse'], new_data['z_gse'], date, ut) 
             
         self.new_data = new_data  
     
