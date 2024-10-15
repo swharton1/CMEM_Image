@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import process_time
 import os
+from matplotlib.patches import Wedge, Polygon, Circle, Arc
 
 class smile_limb():
     '''This object will use the spacecraft position and limb angle to work out the pointing and 
@@ -316,6 +317,68 @@ class smile_limb():
         
         fig.savefig(self.plot_path+'limb_los_vectors_SMILE_({},{},{})_elev_{}_azim_{}.png'.format(self.smile_loc[0], self.smile_loc[1], self.smile_loc[2], elev, azim))
     
+    def make_limb_diagram(self, save=True):
+        '''This will make a diagram showing the setup of the vectors with these constraints. You should make sure the y position of SMILE is zero for best effect. '''
+        
+        plt.close("all")
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
+        ax.set_xlim(-6,11)
+        ax.set_ylim(-3,12)
+        
+        #Add the earth: 
+        self.make_earth_2d(ax, rotation=-90) 
+        
+        #Add arrow for x axis. 
+        ax.arrow(-5,0,15,0, length_includes_head=True, head_width=0.5, color='k')
+        
+        #Add the spacecraft vector. 
+        ax.arrow(0,0,self.smile_loc[0], self.smile_loc[2], length_includes_head=True, head_width=0.5, color='b')
+        
+        #Add the target vector (aim). 
+        ax.arrow(0,0,self.target_loc[0], self.target_loc[2], length_includes_head=True, head_width=0.5, color='g')
+        
+        #Add the b vector 
+        ax.arrow(0,0,self.b[0], self.b[2], length_includes_head=True, head_width=0.5, color='cyan')
+        
+        #Add the look vector. 
+        ax.arrow(self.smile_loc[0],self.smile_loc[2],self.L[0], self.L[2], length_includes_head=True, head_width=0.5, color='r')
+        
+        #Add arcs for angles. 
+        total_angle = np.rad2deg(self.limb_c - self.alpha_angle) 
+        arc_alpha = Arc((self.smile_loc[0],self.smile_loc[2]), 3, 3, angle=-90, theta1=0, theta2=total_angle, color='k')
+        ax.add_patch(arc_alpha)
+        
+        #Add vertical line. 
+        ax.plot([self.smile_loc[0],self.smile_loc[0]],[0,self.smile_loc[2]], 'k--') 
+        
+        #Add labels. 
+        ax.text(self.smile_loc[0]/2, self.smile_loc[2]/2, 's', rotation=np.rad2deg(np.arctan2(self.smile_loc[2],self.smile_loc[0]))+180)
+        
+        ax.text(self.smile_loc[0]+self.L[0]/2, self.smile_loc[2]+self.L[2]/2, 'L', rotation=np.rad2deg(np.arctan2(self.L[2],self.L[0])))
+        
+        ax.text(self.target_loc[0]/2, self.target_loc[2]/2, 't', rotation=0, va='bottom')
+        
+        ax.text(self.b[0]/2.6, self.b[2]/1.8, 'b', rotation=np.rad2deg(np.arctan2(self.b[2],self.b[0])), va='bottom')
+        
+        ax.text(self.smile_loc[0], self.smile_loc[2]/2, r'$\sqrt{s_y^2 + s_z^2}$', rotation=90, ha='right', va='center')
+        
+        ax.text(10.1, 0, 'x', rotation=0, va='center', ha='left')
+        
+        ax.text(self.smile_loc[0]+0.3, self.smile_loc[2]-2, r'$\alpha$', rotation=0, va='center', ha='center')
+        
+        ax.text(self.smile_loc[0]+1.2, self.smile_loc[2]-1.8, "l'", rotation=0, va='center', ha='center')
+        
+        ax.set_aspect('equal')
+        
+        #Turn axes off. 
+        ax.set_axis_off()
+        
+        if save:
+            fig.savefig(self.plot_path+'Orbital_limb_diagram.png', dpi=800)
+    
+    
     def add_fov_boundaries(self, ax2, color='k', lw=2):
         '''This will add the FOV boundaries in black/white. '''
         
@@ -343,3 +406,20 @@ class smile_limb():
         z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
         
         ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
+
+    def make_earth_2d(self, ax, rotation=0):
+        '''This will add a little plot of the Earth on top for reference. '''
+
+        # Add white circle first. 
+        r=1
+        circle = Circle((0,0), r, facecolor='w', edgecolor='navy')
+        ax.add_patch(circle)
+
+        # Add nightside. 
+        theta2 = np.arange(181)-180+rotation
+        xval2 = np.append(r*np.cos(theta2*(np.pi/180)),0)
+        yval2 = np.append(r*np.sin(theta2*(np.pi/180)),0)
+        verts2 = [[xval2[i],yval2[i]] for i in range(len(xval2))]
+        
+        polygon2 = Polygon(verts2, closed=True, edgecolor='navy', facecolor='navy', alpha=1) 
+        ax.add_patch(polygon2)    
