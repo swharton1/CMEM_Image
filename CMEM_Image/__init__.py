@@ -20,6 +20,7 @@ from . import smile_fov_limb
 from . import load_ephemeris_vlocal 
 from . import ppmlr_fits
 from . import orbit_variation
+from . import smile_fov_limb2 
 
 import os 
 # This is a backup to set the environment variables if they haven't been set externally. 
