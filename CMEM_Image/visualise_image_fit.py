@@ -534,7 +534,7 @@ class analyse_fit():
             ax3.set_xlim(-10,30)
             ax3.set_ylim(-30,30)
             ax3.set_zlim(-30,30)
-            ax3.set_title("SMILE = ({:.2f},{:.2f},{:.2f})\nTarget = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+            ax3.set_title("SMILE = ({:.2f},{:.2f},{:.2f})\nTarget = ({:.2f},{:.2f},{:.2f})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
             ax3.set_aspect('equal')
             ax3.view_init(elev,azim) 
         

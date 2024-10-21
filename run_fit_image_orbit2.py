@@ -67,15 +67,15 @@ output_dict['target_loc'] = []
 output_dict['cmem_mp'] = []
 output_dict['params'] = []
 output_dict['min_cost'] = []
-output_dict['t_list'] = tv
+output_dict['t_list'] = []
 output_dict['inout'] = []
 output_dict['smile_loc'] = []
 output_dict['n_pixels'] = n_pixels
 output_dict['m_pixels'] = m_pixels
 output_dict['density'] = ppmlr.density 
-output_dict['x_gsm'] = xv
-output_dict['y_gsm'] = yv
-output_dict['z_gsm'] = zv 
+output_dict['x_gsm'] = []
+output_dict['y_gsm'] = []
+output_dict['z_gsm'] = [] 
 output_dict['tilt'] = [] 
 
 
@@ -87,6 +87,8 @@ for i in range(len(rv)):
     print (i%6)
     if i%6 == 0:
         smile = CMEM_Image.smile_fov_limb.smile_limb(n_pixels=n_pixels, m_pixels=m_pixels, theta_fov=27, phi_fov=16, smile_loc=(xv[i], yv[i], zv[i])) 
+        
+        
         
         #To get an image through the ppmlr datacube. 
         ppmlr_image = CMEM_Image.ppmlr_image.ppmlr_image(ppmlr, smile)
@@ -100,12 +102,18 @@ for i in range(len(rv)):
         fit.write_pickle(fname=pkl_filename)
         
         
-        figname = os.path.join("fitted_orbit_sim_limb", orbit_folder_name, ppmlr_filename, "fit_image_n_{:.1f}_{:0>3d}_nxm_{}_{}_{}_{}_im{}{}_fov_corrected.png".format(ppmlr.density, i, smile.n_pixels, smile.m_pixels, 'cmem', 'absolute', 2, ''))
+        #figname = os.path.join("fitted_orbit_sim_limb", orbit_folder_name, ppmlr_filename, "fit_image_n_{:.1f}_{:0>3d}_nxm_{}_{}_{}_{}_im{}{}_fov_corrected.png".format(ppmlr.density, i, smile.n_pixels, smile.m_pixels, 'cmem', 'absolute', 2, ''))
         
         #Now make the plots to show the output of the fitting process. 
         analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=pkl_filename, model='cmem')
-        analysis.plot_images(save=True, add_mp_projection=True, fname=figname, add_fov_projection=True, los_max=60)
-        print ("Image made...") 
+        #analysis.plot_images(save=True, add_mp_projection=True, fname=figname, add_fov_projection=True, los_max=60)
+        #print ("Image made...") 
+        
+        #Add times and positions. 
+        output_dict['t_list'].append(tv[i]) 
+        output_dict['x_gsm'].append(xv[i])
+        output_dict['y_gsm'].append(yv[i])
+        output_dict['z_gsm'].append(zv[i]) 
         
         #Get subsolar magnetopause out. 
         output_dict['cmem_mp'].append(analysis.rmp_sub)

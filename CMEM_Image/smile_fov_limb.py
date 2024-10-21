@@ -10,7 +10,7 @@ class smile_limb():
     '''This object will use the spacecraft position and limb angle to work out the pointing and 
     target directions, along with everything else.''' 
     
-    def __init__(self, theta_fov=27, phi_fov=16, n_pixels=4, m_pixels=2, smile_loc=(0,-10,10), p_spacing=0.5, p_max=80, limb=20.3):
+    def __init__(self, theta_fov=27, phi_fov=16, n_pixels=4, m_pixels=2, smile_loc=(0,-10,10), p_spacing=0.5, p_max=None, limb=20.3):
         '''This takes in all the initial parameters 
         
         Parameters
@@ -21,7 +21,7 @@ class smile_limb():
         m_pixels - Number of pixels in the phi direction (camera coords)
         smile_loc - vector for the position of smile in magnetospheric xyz coords. 
         p_spacing - space in RE along LOS between points at which to calculate. 
-        p_max - maximum distance in RE from spacecraft it will integrate to. 
+        p_max - maximum distance in RE from spacecraft it will integrate to. If it is set to None, it will be made equal to the length of vector L, the look vector to the aim point.  
         
         '''
         
@@ -63,14 +63,6 @@ class smile_limb():
         self.y_unit = np.array([0,1,0])
         self.z_unit = np.array([0,0,1])
         
-        #Get nhat, the unit vector perpendicular to the vertical meridian containing the look vector. 
-        self.n = np.cross(self.z_unit, self.L) 
-        self.n_unit = self.n/np.sqrt(self.n[0]**2 + self.n[1]**2 + self.n[2]**2) 
-        
-        #Get the SXI tilt angle. 
-        cos_tilt = np.dot(-self.b_unit, self.n_unit)
-        self.sxi_tilt = -np.arccos(cos_tilt) 
-        
         #Get the colatitude of the look direction. 
         cos_colat = self.L[2]/self.Lmag 
         self.sxi_theta = np.arccos(cos_colat) 
@@ -78,42 +70,84 @@ class smile_limb():
         #Get the longitude of the look direction. 
         self.sxi_phi = np.arctan2(self.L[1], self.L[0])
         
-        print ('Tilt = ', np.rad2deg(self.sxi_tilt))
-        print ('Colat = ', np.rad2deg(self.sxi_theta))
-        print ('Long. = ', np.rad2deg(self.sxi_phi)) 
+        #NEW METHOD. 
+        #ROTATE Y UNIT VECTOR AROUND Z AXIS. NO POINT ROTATING AROUND Y AXIS!  
+        self.yhat_rot = np.array([-np.sin(self.sxi_phi), np.cos(self.sxi_phi),0]) 
         
-        #Set LoS calculations to only got to the target point. 
-        self.p_max = self.Lmag
+        #ROTATE Z UNIT VECTOR AROUND Y AXIS AND Z AXIS LIKE DATA! 
+        # Calculate the rotation angle a from theta. a is the increase in colatitude. 
+        a = -(np.pi/2. - self.sxi_theta)
+        self.zhat_rot1 = np.array([np.sin(a),0,np.cos(a)])
+        self.zhat_rot2 = np.array([self.zhat_rot1[0]*np.cos(self.sxi_phi),self.zhat_rot1[0]*np.sin(self.sxi_phi),self.zhat_rot1[2]])
+        
+        #Calculate the cross product of b and L, then get the unit vector. 
+        yimage = np.cross(self.b, self.L) 
+        yimage_mag = np.sqrt(yimage[0]**2 + yimage[1]**2 + yimage[2]**2)
+        self.yimage_unit = yimage/yimage_mag 
+        
+        #Do some fundamental tests to ensure no calculation errors have taken place up to here. 
+        try: 
+            #The cross product of these should be 0 to 5 dp. 
+            np.testing.assert_array_almost_equal(np.cross(self.yhat_rot, self.zhat_rot2), self.L_unit, decimal=5) 
+            assert(np.dot(self.yimage_unit, self.b) == 0) 
+            assert(round(np.dot(self.yhat_rot, self.zhat_rot2),10) == 0) 
+        except AssertionError:
+            print ('Error in rotation of y and z unit vectors.')
+        
+        
+        
+        cos_tilt2 = np.dot(self.b_unit, self.yhat_rot)
+        self.sxi_tilt = np.arccos(cos_tilt2) 
+        
+        #OLD METHOD. 
+        #Get nhat, the unit vector perpendicular to the vertical meridian containing the look vector. 
+        self.n = np.cross(self.z_unit, self.L) 
+        self.n_unit = self.n/np.sqrt(self.n[0]**2 + self.n[1]**2 + self.n[2]**2) 
+        
+        #Get the SXI tilt angle. 
+        cos_tilt = np.dot(-self.b_unit, self.n_unit)
+        self.sxi_tilt2 = -np.arccos(cos_tilt) 
+        
+        
+        
+        #print ('Tilt = ', np.rad2deg(self.sxi_tilt))
+        #print ('Colat = ', np.rad2deg(self.sxi_theta))
+        #print ('Long. = ', np.rad2deg(self.sxi_phi)) 
+        
+        #Set LoS calculations to only got to the target point if p_max is None. 
+        if self.p_max is None:
+            self.p_max = self.Lmag
+        
         
         ts = process_time()
-        print ("Get theta and phi for each pixel:")
+        #print ("Get theta and phi for each pixel:")
         self.get_theta_and_phi_all_pixels()
         te = process_time()
-        print ("Time = {:.1f}s".format(te-ts))
+        #print ("Time = {:.1f}s".format(te-ts))
 
         ts = process_time()
-        print ("Get vector for each pixel:")
+        #print ("Get vector for each pixel:")
         self.get_vector_for_all_pixels()
         te = process_time()
-        print ("Time = {:.1f}s".format(te-ts))
+        #print ("Time = {:.1f}s".format(te-ts))
 
         ts = process_time()
-        print ("Tilt camera: ")
+        #print ("Tilt camera: ")
         self.tilt_sxi_camera() 
         te = process_time()
-        print ("Time = {:.1f}s".format(te-ts))
+        #print ("Time = {:.1f}s".format(te-ts))
 
         ts = process_time()
-        print ("Rotate camera: ")
+        #print ("Rotate camera: ")
         self.rotate_camera()
         te = process_time()
-        print ("Time = {:.1f}s".format(te-ts))
+        #print ("Time = {:.1f}s".format(te-ts))
 
         ts = process_time()
-        print ("Get LOS coordinates: ")
+        #print ("Get LOS coordinates: ")
         self.get_LOS_coords()
         te = process_time()
-        print ("Time = {:.1f}s".format(te-ts))
+        #print ("Time = {:.1f}s".format(te-ts))
         
     def get_alpha_angle(self):
         '''This will calculate alpha, the angle between the spacecraft vector and the perpendicular to the x axis. '''
@@ -144,12 +178,12 @@ class smile_limb():
 
     def plot_vectors(self, elev=45, azim=45):
         '''This will plot all the vectors to make sense of them.'''
-        
+        #plt.close("all")
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d') 
         
         #Add SMILE vector. 
-        ax.plot([0, self.smile_loc[0]], [0, self.smile_loc[1]], [0, self.smile_loc[2]], 'k-', label='SMILE') 
+        ax.plot([0, self.smile_loc[0]], [0, self.smile_loc[1]], [0, self.smile_loc[2]], 'b-', label='SMILE') 
         
         #Add Look vector. 
         ax.plot([self.smile_loc[0], self.smile_loc[0]+self.L[0]], [self.smile_loc[1], self.smile_loc[1]+self.L[1]], [self.smile_loc[2], self.smile_loc[2]+self.L[2]], 'r-', label='Look')
@@ -161,7 +195,25 @@ class smile_limb():
         ax.plot([0, self.b[0]], [0, self.b[1]], [0, self.b[2]], 'c-', label='b') 
         
         #Add vector n unit. 
-        ax.plot([self.b[0], self.b[0]+self.n_unit[0]], [self.b[1], self.b[1]+self.n_unit[1]], [self.b[2], self.b[2]+self.n_unit[2]], 'm-', label='n_unit')
+        #ax.plot([self.b[0], self.b[0]+self.n_unit[0]], [self.b[1], self.b[1]+self.n_unit[1]], [self.b[2], self.b[2]+self.n_unit[2]], 'm-', label='n_unit')
+        
+        
+        #Add rotated y vector. These have not had a tilt applied.  
+        ax.plot([self.smile_loc[0], self.smile_loc[0]+self.yhat_rot[0]], [self.smile_loc[1], self.smile_loc[1]+self.yhat_rot[1]], [self.smile_loc[2], self.smile_loc[2]+self.yhat_rot[2]], color='orange', linestyle='-', label='y_rot')
+        
+        #Add rotated z vector. These have not had a tilt applied. 
+        ax.plot([self.smile_loc[0], self.smile_loc[0]+self.zhat_rot2[0]], [self.smile_loc[1], self.smile_loc[1]+self.zhat_rot2[1]], [self.smile_loc[2], self.smile_loc[2]+self.zhat_rot2[2]], color='k', linestyle='-', label='z_rot')
+        
+        #Add rotated y vector. These have not had a tilt applied.  
+        ax.plot([self.b[0], self.b[0]+self.yhat_rot[0]], [self.b[1], self.b[1]+self.yhat_rot[1]], [self.b[2], self.b[2]+self.yhat_rot[2]], color='orange', linestyle='-')
+        
+        #Add rotated z vector. These have not had a tilt applied. 
+        ax.plot([self.b[0], self.b[0]+self.zhat_rot2[0]], [self.b[1], self.b[1]+self.zhat_rot2[1]], [self.b[2], self.b[2]+self.zhat_rot2[2]], color='k', linestyle='-')
+        
+        #Add the yimage unit vector. 
+        ax.plot([self.b[0], self.b[0]+self.yimage_unit[0]], [self.b[1], self.b[1]+self.yimage_unit[1]], [self.b[2], self.b[2]+self.yimage_unit[2]], color='c', linestyle='-')
+        
+        self.add_earth(ax)
         
         #Sort legend and labels. 
         ax.legend(loc='best')
