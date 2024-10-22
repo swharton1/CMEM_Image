@@ -196,28 +196,61 @@ class smile_fov():
         # For each pixel: 
         for i in range(self.n_pixels):
             for j in range(self.m_pixels):
-                ax.plot(self.xpos[i][j], self.ypos[i][j], self.zpos[i][j], 'k')
+                ax.plot(self.xpos[i][j], self.ypos[i][j], self.zpos[i][j], 'k', lw=0.2)
+        
+        
+        #Add SMILE vector. 
+        ax.plot([0, self.smile_loc[0]], [0, self.smile_loc[1]], [0, self.smile_loc[2]], 'b-', label='SMILE') 
+        
+        
+        #Add Target vector (aim). 
+        ax.plot([0, self.target_loc[0]], [0, self.target_loc[1]], [0, self.target_loc[2]], 'g-', label='Target') 
+        
         
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
         
+        self.add_fov_boundaries(ax)
         self.add_earth(ax)
         ax.set_aspect('equal') 
         
         ax.view_init(elev,azim) 
         
         self.fig2 = fig
-       
+    
+    def add_fov_boundaries(self, ax2, color='k', lw=1):
+        '''This will add the FOV boundaries in black/white. '''
+        
+        #For corner pixels only. 
+        ax2.plot(self.xpos[0][0], self.ypos[0][0], self.zpos[0][0], color, lw=lw)
+        ax2.plot(self.xpos[0][-1], self.ypos[0][-1], self.zpos[0][-1], color, lw=lw)
+        ax2.plot(self.xpos[-1][0], self.ypos[-1][0], self.zpos[-1][0], color, lw=lw)
+        ax2.plot(self.xpos[-1][-1], self.ypos[-1][-1], self.zpos[-1][-1], color, lw=lw)
+        
+        #Join corners together. 
+        ax2.plot([self.xpos[0][0][-1],self.xpos[0][-1][-1]], [self.ypos[0][0][-1],self.ypos[0][-1][-1]], [self.zpos[0][0][-1],self.zpos[0][-1][-1]], color, lw=lw)
+        ax2.plot([self.xpos[0][-1][-1],self.xpos[-1][-1][-1]], [self.ypos[0][-1][-1],self.ypos[-1][-1][-1]], [self.zpos[0][-1][-1],self.zpos[-1][-1][-1]], color, lw=lw)
+        ax2.plot([self.xpos[-1][-1][-1],self.xpos[-1][0][-1]], [self.ypos[-1][-1][-1],self.ypos[-1][0][-1]], [self.zpos[-1][-1][-1],self.zpos[-1][0][-1]], color, lw=lw)
+        ax2.plot([self.xpos[-1][0][-1],self.xpos[0][0][-1]], [self.ypos[-1][0][-1],self.ypos[0][0][-1]], [self.zpos[-1][0][-1],self.zpos[0][0][-1]], color, lw=lw)
+          
     def add_earth(self, ax):
         '''This will add a sphere for the Earth. '''
         
         #Create a spherical surface. 
         radius = 1
-        u = np.linspace(0, 2*np.pi, 100) 
+        u = np.linspace(np.pi/2, 1.5*np.pi, 100) 
         v = np.linspace(0, np.pi, 100) 
         x = radius* np.outer(np.cos(u), np.sin(v)) 
         y = radius* np.outer(np.sin(u), np.sin(v))
         z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
         
         ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
+        
+        u = np.linspace(-np.pi/2, np.pi/2, 100) 
+        v = np.linspace(0, np.pi, 100) 
+        x = radius* np.outer(np.cos(u), np.sin(v)) 
+        y = radius* np.outer(np.sin(u), np.sin(v))
+        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+        
+        ax.plot_surface(x, y, z, color='w', lw=0, alpha=1) 
