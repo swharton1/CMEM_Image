@@ -194,8 +194,14 @@ class ppmlr_image():
         phi_pixels = -(self.smile.phi_fov/2.) + (self.smile.phi_fov/self.smile.m_pixels)*(J+0.5)
         
         #Convert to degrees. Minus sign is so you look away from camera, not towards. 
-        theta_pixels = -np.rad2deg(theta_pixels)
-        phi_pixels = -np.rad2deg(phi_pixels)
+        #This is what is required for the normal SMILE object. 
+        if not hasattr(self.smile, 'radial_constraint'):
+            print ('Not an updated SMILE FOV limb object, so angular arrays need reversing.') 
+            theta_pixels = -np.rad2deg(theta_pixels)
+            phi_pixels = -np.rad2deg(phi_pixels)
+        
+        #You do not need to do this with the new SMILE FOV Limb object. 
+        #In this orientation, Earth will ALWAYS be on the left of the plot by definition. 
         
         # Get contour levels. 
         levels = np.linspace(vmin, vmax, levels+1)
@@ -241,7 +247,7 @@ class ppmlr_image():
         ax2.set_xlim(-10,30)
         ax2.set_ylim(-30,30)
         ax2.set_zlim(-30,30)
-        ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({:.2f},{:.2f},{:.2f})\nAim Point: ({},{},{})'.format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]))
+        ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({:.2f},{:.2f},{:.2f})\nAim Point: ({:.2f},{:.2f},{:.2f})'.format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]))
         ax2.set_aspect('equal')
         ax2.view_init(elev,azim) 
 

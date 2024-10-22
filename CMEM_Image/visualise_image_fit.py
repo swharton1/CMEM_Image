@@ -12,12 +12,17 @@ class analyse_fit():
     '''This class will contain the plotting functions that 
     the CMEM/visualise_models.py analysis class used.'''
     
-    def __init__(self, filename='target/fit_image_n_20.0_SMILE_6.57_-5.94_17.33_Target_10.00_0.00_0.00_nxm_100_50_cmem_absolute_im2_.pkl', model='cmem'): 
-        '''This takes in the filename for the pickle file.''' 
+    def __init__(self, filename='target/fit_image_n_20.0_SMILE_6.57_-5.94_17.33_Target_10.00_0.00_0.00_nxm_100_50_cmem_absolute_im2_.pkl', model='cmem', limb=True): 
+        '''This takes in the filename for the pickle file.
+        
+        filename - pickle filename, inc. first folder. 
+        model - 'cmem' or something else. 
+        limb - Boolean to state whether the limb object was used or not. Needed to plot correctly. Basically a workaround for a minus sign error! ''' 
         
         
         self.current_model = model 
         self.filename = filename
+        self.limb = limb 
         
         if self.current_model == "cmem":
             self.image_tag = "CMEM"
@@ -422,8 +427,11 @@ class analyse_fit():
         phi_pixels = -(self.model['phi_fov']/2.) + (self.model['phi_fov']/self.model['m_pixels'])*(J+0.5)
         
         #Convert to degrees. Minus sign is so you look away from camera, not towards. 
-        theta_pixels = -np.rad2deg(theta_pixels)
-        phi_pixels = -np.rad2deg(phi_pixels)
+        #if not hasattr(self.smile, 'radial_constraint'):
+        if not self.limb:
+            print ('Reverse angular arrays for plotting if not updated SMILE FOV limb object.') 
+            theta_pixels = -np.rad2deg(theta_pixels)
+            phi_pixels = -np.rad2deg(phi_pixels)
         
         # Get contour levels. 
         #levels = np.linspace(vmin, vmax, levels+1)

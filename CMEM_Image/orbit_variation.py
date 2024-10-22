@@ -40,10 +40,10 @@ class orbit_variation():
         t = self.orbit['dtime']
         
         #For each time along the orbit. 
-        print ("[x,y,z],             Aim,   Lx,   bx,   n,              cos(t),   Tilt,  bz/by, sz/sy")
-        for i, ival in enumerate(t):
-            smile = sfl.smile_limb(smile_loc=[x[i], y[i], z[i]], p_max=p_max) 
-            print ("[{:.2f},{:.2f},{:.2f}], {:.2f}, {:.2f}, {:.2f},  ({:.2f},{:.2f},{:.2f}),  {:.2f}, {:.2f},    {:.2f}, {:.2f}".format(x[i], y[i], z[i], smile.target_loc[0], smile.L[0], smile.b[0], smile.n[0], smile.n[1], smile.n[2], np.cos(smile.sxi_tilt), np.rad2deg(smile.sxi_tilt), smile.b[2]/smile.b[1], z[i]/y[i]))
+        #print ("[x,y,z],             Aim,   Lx,   bx,   n,              cos(t),   Tilt,  bz/by, sz/sy")
+        #for i, ival in enumerate(t):
+        #    smile = sfl.smile_limb(smile_loc=[x[i], y[i], z[i]], p_max=p_max) 
+        #    print ("[{:.2f},{:.2f},{:.2f}], {:.2f}, {:.2f}, {:.2f},  ({:.2f},{:.2f},{:.2f}),  {:.2f}, {:.2f},    {:.2f}, {:.2f}".format(x[i], y[i], z[i], smile.target_loc[0], smile.L[0], smile.b[0], smile.n[0], smile.n[1], smile.n[2], np.cos(smile.sxi_tilt), np.rad2deg(smile.sxi_tilt), smile.b[2]/smile.b[1], z[i]/y[i]))
     
         
     def animate_orbit(self, p_max=10, xlim=[-8,12], ylim=[-10,10], zlim=[-5,20], aimlim=[0,20]):
@@ -63,13 +63,13 @@ class orbit_variation():
         plt.close("all")
         fig = plt.figure(figsize=(10,8))
         fig.subplots_adjust(left=0.02, right=0.98, top=0.95, bottom=0.05)
-        spec = gridspec.GridSpec(nrows=5, ncols=3, figure=fig)
-        ax = fig.add_subplot(spec[0:5,0:2], projection='3d') 
+        spec = gridspec.GridSpec(nrows=4, ncols=3, figure=fig)
+        ax = fig.add_subplot(spec[0:4,0:2], projection='3d') 
         ax2 = fig.add_subplot(spec[0,2]) 
         ax3 = fig.add_subplot(spec[1,2])
         ax4 = fig.add_subplot(spec[2,2])
-        ax5 = fig.add_subplot(spec[3,2])
-        ax6 = fig.add_subplot(spec[4,2])
+        #ax5 = fig.add_subplot(spec[3,2])
+        ax6 = fig.add_subplot(spec[3,2])
         
         
         #Add the Earth. 
@@ -113,15 +113,18 @@ class orbit_variation():
         #Add the FOV boundaries. 
         #For corner pixels only. 
         c1 = ax.plot(smile.xpos[0][0], smile.ypos[0][0], smile.zpos[0][0], 'k', lw=1)[0]
-        c2 = ax.plot(smile.xpos[0][-1], smile.ypos[0][-1], smile.zpos[0][-1], 'c', lw=1)[0]
+        c2 = ax.plot(smile.xpos[0][-1], smile.ypos[0][-1], smile.zpos[0][-1], 'k', lw=1)[0]
         c3 = ax.plot(smile.xpos[-1][0], smile.ypos[-1][0], smile.zpos[-1][0], 'k', lw=1)[0]
-        c4 = ax.plot(smile.xpos[-1][-1], smile.ypos[-1][-1], smile.zpos[-1][-1], 'c', lw=1)[0]
+        c4 = ax.plot(smile.xpos[-1][-1], smile.ypos[-1][-1], smile.zpos[-1][-1], 'k', lw=1)[0]
         
         c5 = ax.plot([smile.xpos[0][0][-1],smile.xpos[0][-1][-1]], [smile.ypos[0][0][-1],smile.ypos[0][-1][-1]], [smile.zpos[0][0][-1],smile.zpos[0][-1][-1]], 'k', lw=1)[0]
-        c6 = ax.plot([smile.xpos[0][-1][-1],smile.xpos[-1][-1][-1]], [smile.ypos[0][-1][-1],smile.ypos[-1][-1][-1]], [smile.zpos[0][-1][-1],smile.zpos[-1][-1][-1]], 'c', lw=1)[0]
+        c6 = ax.plot([smile.xpos[0][-1][-1],smile.xpos[-1][-1][-1]], [smile.ypos[0][-1][-1],smile.ypos[-1][-1][-1]], [smile.zpos[0][-1][-1],smile.zpos[-1][-1][-1]], 'k', lw=1)[0]
         c7 = ax.plot([smile.xpos[-1][-1][-1],smile.xpos[-1][0][-1]], [smile.ypos[-1][-1][-1],smile.ypos[-1][0][-1]], [smile.zpos[-1][-1][-1],smile.zpos[-1][0][-1]], 'k', lw=1)[0]
         c8 = ax.plot([smile.xpos[-1][0][-1],smile.xpos[0][0][-1]], [smile.ypos[-1][0][-1],smile.ypos[0][0][-1]], [smile.zpos[-1][0][-1],smile.zpos[0][0][-1]], 'k', lw=1)[0]
         #c1, c2, c3, c4, c5, c6, c7, c8 = self.add_fov_boundaries(ax, smile, lw=1) 
+        
+        #Add the FOV Rectangle. 
+        #rect_obj = self.add_fov_rectangle(ax, smile, color='gray') 
         
         # For each pixel: 
         #for i in range(smile.n_pixels):
@@ -182,17 +185,17 @@ class orbit_variation():
         ax4.grid(which='both')
         
         #Sort out the tilt axis. 
-        tilt_data = ax5.plot(t[0], np.rad2deg(smile.sxi_tilt), 'k')[0]
-        ax5.set_ylabel("Tilt [deg]")
+        #tilt_data = ax5.plot(t[0], np.rad2deg(smile.sxi_tilt), 'k')[0]
+        #ax5.set_ylabel("Tilt [deg]")
         #ax2.set_xlabel('UT') 
-        ax5.set_xlim(t[0], t[-1]) 
-        ax5.set_ylim(-180,190)
+        #ax5.set_xlim(t[0], t[-1]) 
+        #ax5.set_ylim(-180,190)
         
         #Format time axis. 
-        ax5.xaxis.set_major_locator(t_locate_major)
-        ax5.xaxis.set_minor_locator(t_locate_minor)
-        ax5.xaxis.set_major_formatter(t_form)
-        ax5.grid(which='both')
+        #ax5.xaxis.set_major_locator(t_locate_major)
+        #ax5.xaxis.set_minor_locator(t_locate_minor)
+        #ax5.xaxis.set_major_formatter(t_form)
+        #ax5.grid(which='both')
         
         #Sort out the radius axis. 
         r_data = ax6.plot(t[0], r[0], 'k')[0]
@@ -222,7 +225,7 @@ class orbit_variation():
         aim_list = []
         alpha_list = []
         limb_list = [] 
-        tilt_list = []
+        #tilt_list = []
         
         #This is the function that will update the image. 
         def update(frame):
@@ -233,7 +236,7 @@ class orbit_variation():
             aim_list.append(smile.target_loc[0]) 
             alpha_list.append(np.rad2deg(smile.alpha_angle))
             limb_list.append(np.rad2deg(smile.limb_c-smile.alpha_angle))
-            tilt_list.append(np.rad2deg(smile.sxi_tilt)) 
+            #tilt_list.append(np.rad2deg(smile.sxi_tilt)) 
             
             #Plot SMILE location in blue. 
             smile_pos.set_data_3d([x[frame]], [y[frame]], [z[frame]])
@@ -287,12 +290,12 @@ class orbit_variation():
             limb_data.set_data(t[:frame], limb_list[:frame]) 
             
             #Update the tilt angle. 
-            tilt_data.set_data(t[:frame], tilt_list[:frame])
+            #tilt_data.set_data(t[:frame], tilt_list[:frame])
             
             #Update the radial distance of SMILE. 
             r_data.set_data(t[:frame], r[:frame])
             
-            return (smile_pos, smile_vect, smile_orbit, smile_x, smile_y, smile_z, smile_x_orbit, smile_y_orbit, smile_z_orbit, look_vect, aim_vect, b_vect, c1, c2, c3, c4, c5, c6, c7, c8, title, aim_data, alpha_data, limb_data, tilt_data, r_data)
+            return (smile_pos, smile_vect, smile_orbit, smile_x, smile_y, smile_z, smile_x_orbit, smile_y_orbit, smile_z_orbit, look_vect, aim_vect, b_vect, c1, c2, c3, c4, c5, c6, c7, c8, title, aim_data, alpha_data, limb_data, r_data)
             
         #Now make the animation. 
         ani = animation.FuncAnimation(fig=fig, func=update,  frames=len(x), interval=20) 
@@ -315,7 +318,19 @@ class orbit_variation():
         c8 = ax2.plot([smile.xpos[-1][0][-1],smile.xpos[0][0][-1]], [smile.ypos[-1][0][-1],smile.ypos[0][0][-1]], [smile.zpos[-1][0][-1],smile.zpos[0][0][-1]], color, lw=lw)
         
         return c1, c2, c3, c4, c5, c6, c7, c8
-            
+
+#    def add_fov_rectangle(self, ax, smile, color='gray'):
+#        '''This will hopefully add a rectangle to the end of the FOV to make its shape clearer.'''
+        
+#        v1 = [smile.xpos[0][0][-1], smile.ypos[0][0][-1], smile.zpos[0][0][-1]] 
+#        v2 = [smile.xpos[0][-1][-1], smile.ypos[0][-1][-1], smile.zpos[0][-1][-1]] 
+#        v3 = [smile.xpos[-1][-1][-1], smile.ypos[-1][-1][-1], smile.zpos[-1][-1][-1]] 
+#        v4 = [smile.xpos[-1][0][-1], smile.ypos[-1][0][-1], smile.zpos[-1][0][-1]] 
+        
+#        rects = [[v1, v2, v3, v4, v1]]
+#        rect_obj = ax.add_collection3d(Poly3DCollection(rects, color=color, alpha=0.5, edgecolor=None))
+#        return rect_obj
+                   
     def add_earth(self, ax):
         '''This will add a sphere for the Earth. '''
         
