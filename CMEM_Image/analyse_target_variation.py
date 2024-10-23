@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import os
+import string
+from matplotlib.ticker import MultipleLocator
+
 
 class analyse_target():
     '''This will contain any plotting functions needed'''
@@ -43,7 +46,7 @@ class analyse_target():
         ax = fig.add_subplot(111) 
         
         #Add labels. 
-        ax.set_xlabel('Target x Position [RE]') 
+        ax.set_xlabel('Aim Point [RE]') 
         ax.set_ylabel('Subsolar Magnetopause Position [RE]')
         
         #Add on the PPMLR values. 
@@ -68,4 +71,89 @@ class analyse_target():
         
         #Save the plot. 
         fig.savefig(self.plot_path+'target_variation_analysis.png') 
+
+
+
+class analyse_target_all():
+    '''This will create a master plot for all solar wind densities.'''
+    
+    def __init__(self):
+        '''Sorts out paths and reads in the file.'''
         
+        self.filenames = ['target_variation_output_n_5.0.pkl', 
+            'target_variation_output_n_7.5.pkl',
+            'target_variation_output_n_12.3.pkl',
+            'target_variation_output_n_20.0.pkl',
+            'target_variation_output_n_25.0.pkl',
+            'target_variation_output_n_35.0.pkl'] 
+        
+        
+        self.plot_path = os.environ.get('PLOT_PATH')+'target_variation/' 
+        
+        self.data = []
+        for f in self.filenames: 
+            self.data.append(self.read_pickle(self.plot_path+f))
+        
+    def read_pickle(self, filename):
+        '''This will read a single pickle file. '''
+
+        with open(filename, 'rb') as f: 
+            pickle_dict = pickle.load(f)
+        return pickle_dict        
+        
+    def make_plot(self):
+        '''This will make the plot that appears in the paper.'''
+        plt.close("all")
+        fig = plt.figure(figsize=(6,8))
+        
+        for d, data in enumerate(self.data):
+        
+            #Add an axis. 
+            ax = fig.add_subplot(6,1,d+1)
+            ax.set_ylabel(r'$r_{mp}$ '+r'$(R_E)$')
+            
+            #Add three definitions. 
+            ax.plot([data['target_x'][0], data['target_x'][-1]], [data['maxIx'], data['maxIx']], 'b')
+            ax.plot([data['target_x'][0], data['target_x'][-1]], [data['f.25'], data['f.25']], 'g')
+            ax.plot([data['target_x'][0], data['target_x'][-1]], [data['maxdIx'], data['maxdIx']], 'r')
+            
+            #Add CMEM. 
+            ax.plot(data['target_x'], data['cmem_mp'], 'k', marker='x')
+            
+            #Set xlims. 
+            ax.set_xlim(5.5,13.5)
+            
+            #Add density label.  
+            ax.text(0.99, 0.95, '{:.2f} cm'.format(data['density'])+r'$^{-3}$', fontsize=8, transform=ax.transAxes, ha='right', va='top', rotation=0, bbox=dict(boxstyle='round', facecolor='w', alpha=1, edgecolor='none'))
+            
+            #Subplot labels 
+            letters = string.ascii_lowercase
+            ax.text(0.01, 0.95, '({})'.format(letters[d]), fontsize=8, transform=ax.transAxes, ha='left', va='top', rotation=0, bbox=dict(boxstyle='round', facecolor='w', alpha=1, edgecolor='none'))
+            
+            #if d == 5:
+            #    xticklabels = ['{}\n{}'.format(data['m_pixels'][i], data['m_pixels'][i]*data['n_pixels'][i]) for i in range(len(data['m_pixels']))]
+            #    ax.set_xlabel('m pixel number\nTotal pixel number') 
+            #else:
+            if d < 5: 
+                ax.set_xticklabels([])
+            else:
+                ax.set_xlabel('Aim Point '+r'$(R_E)$')
+            #ax.set_xticks(data['m_pixels'], labels=xticklabels, fontsize=10) 
+            #ax.minorticks_on()
+            ax.xaxis.set_minor_locator(MultipleLocator(0.5))
+            ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+            ax.set_ylim(data['f.25']-1, data['f.25']+1)
+            ax.grid(which='both')
+            
+            #Add vertical lines. 
+            ax.plot([data['maxIx'],data['maxIx']], ax.get_ylim(), 'b', zorder=0)
+            ax.plot([data['f.25'],data['f.25']], ax.get_ylim(), 'g', zorder=0)
+            ax.plot([data['maxdIx'],data['maxdIx']], ax.get_ylim(), 'r', zorder=0)
+            
+            
+            #Add title to top plot. 
+            if d == 0: 
+                ax.set_title('Variation of Subsolar Magnetopause Position\nwith Aim Point   SMILE = ({:.2f},{:.2f},{:.2f})'.format(*data['smile_loc'], ), fontsize=10)
+
+        #Save the plot. 
+        fig.savefig(self.plot_path+'target_analysis_all.png')     
