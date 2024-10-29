@@ -410,7 +410,7 @@ class smile_limb():
         
         ax.text(self.smile_loc[0]+self.L[0]/2, self.smile_loc[2]+self.L[2]/2, 'L', rotation=np.rad2deg(np.arctan2(self.L[2],self.L[0])))
         
-        ax.text(self.target_loc[0]/2, self.target_loc[2]/2, 't', rotation=0, va='bottom')
+        ax.text(self.target_loc[0]/2, self.target_loc[2]/2, 'a', rotation=0, va='bottom')
         
         ax.text(self.b[0]/2.6, self.b[2]/1.8, 'b', rotation=np.rad2deg(np.arctan2(self.b[2],self.b[0])), va='bottom')
         

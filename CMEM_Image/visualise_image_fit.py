@@ -250,7 +250,7 @@ class analyse_fit():
 
         fig = plt.figure(figsize=(8,8))
         fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.85)
-        fig.text(0.5, 0.9, "Parameter variation with optimisation\nn = {:.2f} cm".format(self.model['density'])+r"$^{-3}$"+", SMILE = ({},{},{}), Target = ({},{},{}), nxm = {}x{}".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2], self.model['n_pixels'], self.model['m_pixels'])+" \nOptimisation Time = {:.1f}s\nModel = {}".format(self.model['opt time'], self.image_tag.capitalize()), ha="center")
+        fig.text(0.5, 0.9, "Parameter variation with optimisation\nn = {:.2f} cm".format(self.model['density'])+r"$^{-3}$"+", SMILE = ({},{},{}), Aim Point = ({},{},{}), nxm = {}x{}".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2], self.model['n_pixels'], self.model['m_pixels'])+" \nOptimisation Time = {:.1f}s\nModel = {}".format(self.model['opt time'], self.image_tag.capitalize()), ha="center")
         ax1 = fig.add_subplot(321)
         ax2 = fig.add_subplot(322)
         ax2b = ax2.twinx()
@@ -440,7 +440,7 @@ class analyse_fit():
         if add_fov_projection:
             ax1.set_title("PPMLR Image from SMILE\nn = {} cm".format(self.model['density'])+r"$^{-3}$", fontsize=10)
         else:
-            ax1.set_title("PPMLR Image from SMILE\nSMILE = ({:.2f},{:.2f},{:.2f}), Target = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+            ax1.set_title("PPMLR Image from SMILE\nSMILE = ({:.2f},{:.2f},{:.2f}), Aim Point = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
         ax1.set_xlabel('deg')
         if not add_fov_projection: ax1.set_ylabel('deg')
         ax1.set_aspect('equal')
@@ -542,7 +542,7 @@ class analyse_fit():
             ax3.set_xlim(-10,30)
             ax3.set_ylim(-30,30)
             ax3.set_zlim(-30,30)
-            ax3.set_title("SMILE = ({:.2f},{:.2f},{:.2f})\nTarget = ({:.2f},{:.2f},{:.2f})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+            ax3.set_title("SMILE = ({:.2f},{:.2f},{:.2f})\nAim Point = ({:.2f},{:.2f},{:.2f})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
             ax3.set_aspect('equal')
             ax3.view_init(elev,azim) 
         
@@ -600,7 +600,7 @@ class analyse_fit():
         #Add the PPMLR image, which is always the same. 
         mesh1 = ax1.pcolormesh(phi_pixels, theta_pixels, self.model['ppmlr los intensity'], cmap=cmap, vmin=0, vmax=los_max)
         
-        ax1.set_title("PPMLR Image from SMILE\nSMILE = ({:.2f},{:.2f},{:.2f}), Target = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
+        ax1.set_title("PPMLR Image from SMILE\nSMILE = ({:.2f},{:.2f},{:.2f}), Aim Point = ({},{},{})".format(self.model['smile_loc'][0], self.model['smile_loc'][1], self.model['smile_loc'][2], self.model['target_loc'][0], self.model['target_loc'][1], self.model['target_loc'][2]), fontsize=10)
         ax1.set_xlabel('deg')
         ax1.set_ylabel('deg')
         ax1.set_aspect('equal')

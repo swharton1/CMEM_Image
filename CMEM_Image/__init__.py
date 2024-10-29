@@ -17,6 +17,7 @@ from . import analyse_density_variation
 from . import analyse_tilt_variation
 from . import get_meridians
 from . import smile_fov_limb 
+from . import smile_fov_limb_old
 from . import load_ephemeris_vlocal 
 from . import ppmlr_fits
 from . import orbit_variation 

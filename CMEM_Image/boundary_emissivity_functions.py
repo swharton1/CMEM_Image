@@ -57,7 +57,7 @@ def lin_scaled_func(theta, phi, a, beta_c, c, dn, ds, theta_n, theta_s, r0_lin, 
         f = (np.cos(theta/2) + a[5]*np.sin(2*theta)*(1-np.exp(-theta)))**(p1*(beta_c[0] + beta_c[1]*np.cos(phi) + beta_c[2]*np.sin(phi) + beta_c[3]*(np.sin(phi)**2)))
 
         # Get Q. 
-        Q = p2*c*np.exp(dn*(phi_n**a[21])) + p2*c*np.exp(ds*(phi_s**a[21]))
+        Q = p2*c*np.exp(p3*dn*(phi_n**a[21])) + p2*c*np.exp(p3*ds*(phi_s**a[21]))
 
         # Get r. 
         r = p0*r0_lin*f + Q
