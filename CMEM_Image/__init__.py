@@ -21,6 +21,8 @@ from . import smile_fov_limb_old
 from . import load_ephemeris_vlocal 
 from . import ppmlr_fits
 from . import orbit_variation 
+from . import coord_conv
+from . import read_fits_cube
 
 import os 
 # This is a backup to set the environment variables if they haven't been set externally. 
@@ -31,3 +33,5 @@ if "PICKLE_PATH" not in os.environ:
     os.environ["PICKLE_PATH"] = "/home/s/sw682/Code/pickled_files/CMEM_Image_pickled_models/" 
 if "PPMLR_PATH" not in os.environ:
     os.environ["PPMLR_PATH"] = "/data/sol-ionosphere/SMILE/PPMLR/"
+if "BATSRUS_PATH" not in os.environ:
+    os.environ["BATSRUS_PATH"] = "/data/smile/BATSRUS/"

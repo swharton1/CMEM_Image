@@ -10,11 +10,12 @@ from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
 from . import boundary_emissivity_functions as bef 
 from . import get_names_and_units as gnau 
 from . import set_initial_params as sip
+from . import coord_conv as cconv
 
 class image_sim(): 
     '''This is the object to simulate the image.''' 
     
-    def __init__(self, smile, model="jorg", init_method=2, params0=None, temp=200000, density=5, vx=400, vy=0, vz=0, bx=0, by=0, bz=5, dipole=0): 
+    def __init__(self, smile, model="cmem", init_method=2, params0=None, temp=200000, density=5, vx=400, vy=0, vz=0, bx=0, by=0, bz=5, dipole=0): 
         '''This takes in the smile object and initial parameters and adds them to self.'''
         
         #Save the image to a standard name. 
@@ -37,7 +38,7 @@ class image_sim():
         
         #Extract the x, y and z coords along the lines of sight and 
         #convert them to theta, phi and r.         
-        self.r, self.theta, self.phi = self.convert_xyz_to_shue_coords(smile.xpos, smile.ypos, smile.zpos) 
+        self.r, self.theta, self.phi = cconv.convert_xyz_to_shue_coords(smile.xpos, smile.ypos, smile.zpos) 
         
         #Get the initial model parameters. 
         self.get_init_model_params(model=model, init_method=init_method, params0=params0)
@@ -82,35 +83,6 @@ class image_sim():
         mag_pressure = mag_pressure*1000000000
 
         return mag_pressure
-            
-    def convert_xyz_to_shue_coords(self, x, y, z):
-        '''This will convert the x,y,z coordinates to those used in the Shue model 
-        of the magnetopause and bowshock. 
-
-        Parameters
-        ----------
-        x, y, z - now 3D.  
-
-        Returns
-        -------
-        r, theta (rad) and phi (rad)
-        '''
-
-        # r 
-        r = (x**2 + y**2 + z**2)**0.5
-        
-        # theta - only calc. where coordinate singularities won't occur. 
-        theta = np.zeros(r.shape)
-        i = np.where(r != 0)
-        theta[i] =  np.arccos(x[i]/r[i])
-
-        # phi - only calc. where coordinate singularities won't occur. 
-        phi = np.zeros(r.shape)
-        j = np.where((y**2 + z**2) != 0)
-        phi[j] = np.arccos(y[j]/((y[j]**2 + z[j]**2)**0.5))
-        
-        return r, theta, phi
-    
 
             
     def get_init_model_params(self, model="jorg", init_method=2, params0=None):
@@ -199,7 +171,7 @@ class image_sim():
     #PLOTTING FUNCTIONS 
     ###################
     
-    def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0):
+    def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, save=False):
         '''This will plot the simulated image it has created. '''
         
         fig = plt.figure(figsize=(8,5))
@@ -266,7 +238,7 @@ class image_sim():
         ax2.set_ylabel('y')
         ax2.set_zlabel('z')
         ax2.set_xlim(-10,30)
-        ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({},{},{})\nAim Point: ({},{},{})'.format(self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2]))
+        ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({},{},{})\nAim Point: ({},{},{})'.format(*self.smile.smile_loc, *self.smile.target_loc))
         ax2.set_aspect('equal')
         ax2.view_init(elev,azim) 
         
@@ -283,8 +255,9 @@ class image_sim():
         
         fig.text(0.5, 0.02, label, ha='center')
                     
-        
-        fig.savefig(self.plot_path+"{}_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.current_model, self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
+        if save: 
+            print ('Saving to: ', self.plot_path+"model_images/{}_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.current_model, self.density, *self.smile.smile_loc, *self.smile.target_loc,self.smile.n_pixels, self.smile.m_pixels))
+            fig.savefig(self.plot_path+"model_images/{}_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.current_model, self.density, *self.smile.smile_loc, *self.smile.target_loc,self.smile.n_pixels, self.smile.m_pixels)) 
     
     
     

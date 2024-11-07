@@ -11,10 +11,10 @@ import datetime as dt
 
 #Get the orbit data. 
 print ('Get orbit data...') 
-#stime=(2025,10,1)
-#etime=(2025,10,3,3)
-stime=(2026,4,2)
-etime=(2026,4,4,3)
+stime=(2025,10,1)
+etime=(2025,10,3,3)
+#stime=(2026,4,2)
+#etime=(2026,4,4,3)
 orbit = CMEM_Image.load_ephemeris_vlocal.orbit(stime=stime, etime=etime, calc_gsm=True)
 orbit_data = orbit.new_data 
 
@@ -101,21 +101,21 @@ for i in range(len(rv)):
         
         
             #To get an image through the ppmlr datacube. 
-            #ppmlr_image = CMEM_Image.ppmlr_image.ppmlr_image(ppmlr, smile)
+            ppmlr_image = CMEM_Image.ppmlr_image.ppmlr_image(ppmlr, smile)
         
             #Get the filename of the pickle file. 
             pkl_filename = 'orbit_lim/fit_image_n_{:.1f}_SMILE_limb_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_cmem_absolute_im2.pkl'.format(ppmlr.density, smile.smile_loc[0], smile.smile_loc[1], smile.smile_loc[2], n_pixels, m_pixels)
         
             #Fit to the image. 
-            #fit = CMEM_Image.fit_model_image_to_ppmlr_image.fit_image(ppmlr_image, smile) 
-            #fit.fit_function_with_nelder_mead(model='cmem', init_method=2, params0=None, cost_func='absolute') 
-            #fit.write_pickle(fname=pkl_filename)
+            fit = CMEM_Image.fit_model_image_to_ppmlr_image.fit_image(ppmlr_image, smile) 
+            fit.fit_function_with_nelder_mead(model='cmem', init_method=2, params0=None, cost_func='normalised') 
+            fit.write_pickle(fname=pkl_filename)
         
         
             figname = os.path.join("fitted_orbit_sim_limb", orbit_folder_name, ppmlr_filename, "fit_image_n_{:.1f}_{:0>3d}_nxm_{}_{}_{}_{}_im{}{}_fov_newsmile.png".format(ppmlr.density, i, smile.n_pixels, smile.m_pixels, 'cmem', 'absolute', 2, ''))
         
             #Now make the plots to show the output of the fitting process. 
-            analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=pkl_filename, model='cmem')
+            analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=pkl_filename, model='cmem', limb=True)
             analysis.plot_images(save=True, add_mp_projection=True, fname=figname, add_fov_projection=True, los_max=60)
             print ("Image made...") 
         

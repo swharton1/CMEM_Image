@@ -22,19 +22,21 @@ ppmlr = CMEM_Image.ppmlr_fits.read_ppmlr_fits(filename="S05D20V400B0000-05rad.fi
 #To get an image through the ppmlr datacube. 
 ppmlr_image = CMEM_Image.ppmlr_image.ppmlr_image(ppmlr, smile) 
 
+#First, you need the pickled filename.
+pickle_filename = 'fit_image_n_20.0_SMILE_{:.2f}_{:.2f}_{:.2f}_Target_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_cmem_normalised_im2_.pkl'.format(*smile_loc, *target_loc, n_pixels, m_pixels)
+
 #Now run the code to fit a model image to the PPMLR image. 
-#fit = CMEM_Image.fit_model_image_to_ppmlr_image.fit_image(ppmlr_image, smile) 
-#fit.fit_function_with_nelder_mead(model='cmem', init_method=2, params0=None, cost_func='absolute') 
-#fit.write_pickle()
+fit = CMEM_Image.fit_model_image_to_ppmlr_image.fit_image(ppmlr_image, smile) 
+fit.fit_function_with_nelder_mead(model='cmem', init_method=2, params0=None, cost_func='normalised') 
+fit.write_pickle(fname=pickle_filename)
 
 #Use this code if you want to plot the output. 
 
-#First, you need the pickled filename.
-filename = 'fit_image_n_20.0_SMILE_{:.2f}_{:.2f}_{:.2f}_Target_{:.2f}_{:.2f}_{:.2f}_nxm_{}_{}_cmem_absolute_im2_.pkl'.format(*smile_loc, *target_loc, n_pixels, m_pixels)
-analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=filename, model='cmem', limb=False)
+
+analysis = CMEM_Image.visualise_image_fit.analyse_fit(filename=pickle_filename, model='cmem', limb=False)
 
 #To plot the parameter and cost variation with iteration.
-analysis.plot_change_in_parameters(save=True)
+#analysis.plot_change_in_parameters(save=True)
 
 #To plot the ppmlr image next to the fitted model image. 
 analysis.plot_images(save=True, los_max=60, add_fov_projection=True)

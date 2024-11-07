@@ -9,12 +9,13 @@ import os
 
 from . import set_initial_params as sip 
 from . import boundary_emissivity_functions as bef 
+from . import coord_conv as cconv
 
 class fit_image():
     '''This class will try to fit a model image to a PPMLR image. '''
     
     def __init__(self, ppmlr_image, smile):
-        '''This takes in the ppmlr_image and smile objects and attaches them. It also works out the shue coordinates.
+        '''This takes in the ppmlr_image and smile objects and attaches them. 
         
         Parameters
         ----------
@@ -43,7 +44,7 @@ class fit_image():
         # Convert to Shue cooords. to calculate the function. 
         print ("Calculating shue coordinates:")
         ts = process_time()
-        self.r, self.theta, self.phi = self.convert_xyz_to_shue_coords(self.smile.xpos, self.smile.ypos, self.smile.zpos)
+        self.r, self.theta, self.phi = cconv.convert_xyz_to_shue_coords(self.smile.xpos, self.smile.ypos, self.smile.zpos)
         te = process_time()
         print ("Time = {:.1f}s".format(te-ts))   
         
@@ -88,34 +89,6 @@ class fit_image():
         mag_pressure = mag_pressure*1000000000
 
         return mag_pressure
-    
-    def convert_xyz_to_shue_coords(self, x, y, z):
-        '''This will convert the x,y,z coordinates to those used in the Shue model 
-        of the magnetopause and bowshock. 
-
-        Parameters
-        ----------
-        x, y, z - now 3D.  
-
-        Returns
-        -------
-        r, theta (rad) and phi (rad)
-        '''
-
-        # r 
-        r = (x**2 + y**2 + z**2)**0.5
-        
-        # theta - only calc. where coordinate singularities won't occur. 
-        theta = np.zeros(r.shape)
-        i = np.where(r != 0)
-        theta[i] =  np.arccos(x[i]/r[i])
-
-        # phi - only calc. where coordinate singularities won't occur. 
-        phi = np.zeros(r.shape)
-        j = np.where((y**2 + z**2) != 0)
-        phi[j] = np.arccos(y[j]/((y[j]**2 + z[j]**2)**0.5))
-        
-        return r, theta, phi
         
     #COST FUNCTIONS
     ###############
@@ -130,8 +103,9 @@ class fit_image():
         Returns
         -------
         Cost Function. 
-            - if self.cost_func == "sum squares", it will return the cost function using squared deviations.  
-            - elif self.cost_func == "absolute", it will return the cost function using absolute deviations. 
+            - if self.cost_func == "sum squares", it will return the cost function using the sum of the squared deviations normalised by the number of data points.  
+            - elif self.cost_func == "absolute", it will return the cost function using absolute deviations. Not recommended by Alberto. 
+            - elif self.cost_func == "normalised", it will return the cost function using the sum of the squared deviations normalised by the sum of the squared observations. 
          
         '''
 
@@ -258,7 +232,7 @@ class fit_image():
     #FITTING THE MODEL TO THE DATA
     ##############################
            
-    def fit_function_with_nelder_mead(self, model = "cmem", params0 = None, cost_func="absolute", init_method=2):
+    def fit_function_with_nelder_mead(self, model = "cmem", params0 = None, cost_func="normalised", init_method=2, maxiter=400, adaptive=False):
         '''This uses a Nelder-Mead minimisation technique to find the best 
         parameters for the chosen model to the data. 
         
@@ -272,7 +246,8 @@ class fit_image():
             - Absolute will calculate the sum of the absolute deviations/n 
             - Normalised will calculate the sum of the (squared deviations) /(n*sum observed)
         init_method - Boolean to use either method 1 or method 2 from the CMEM paper to set the initial model parameters. 
-
+        maxiter - Maximum number of iterations to do. This is to stop it going on endlessly without making much difference. 
+        adaptive - Boolean to adapt algorithm parameters to dimensionality of problem. Found it didn't really make much difference. See Gao and Han (2012). def = False 
         '''
 
         
@@ -329,7 +304,8 @@ class fit_image():
         # It returns an OptimizeResult object (see scipy docs). 
         print ("Minimising function:")
         ts = process_time() 
-        self.result = minimize(Calculate_cost, self.params0, method='nelder-mead', bounds=None)
+        self.result = minimize(Calculate_cost, self.params0, method='nelder-mead', 
+            bounds=None, options={'maxiter':maxiter, 'adaptive':adaptive})
         te = process_time()
         self.opt_time = te-ts
         print ("Time = {:.1f}s".format(self.opt_time)) 
@@ -412,7 +388,8 @@ class fit_image():
                         "zpos":self.smile.zpos,
                         "maxIx":self.ppmlr_image.ppmlr.maxIx,
                         "maxdIx":self.ppmlr_image.ppmlr.maxdIx,
-                        "f.25":self.ppmlr_image.ppmlr.f
+                        "f.25":self.ppmlr_image.ppmlr.f,
+                        "iterations":self.iterations
                         }
         
         with open(os.path.join(pickle_path, self.current_model+"_optimised", fname), "wb") as f:

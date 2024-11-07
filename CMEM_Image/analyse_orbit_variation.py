@@ -135,7 +135,15 @@ class analyse_orbit():
         #ax2.plot(delta_time, r, 'k-', label='r', marker='x')
         
         #Add on aim point. 
+        ax3.plot(xlims, [maxIx, maxIx], 'b-', label='maxIx')
+        ax3.plot(xlims, [f25, f25], 'g-', label='f.25')  
+        ax3.plot(xlims, [maxdIx, maxdIx], 'r-', label='maxdIx')
+        
         ax3.plot(delta_time, target_loc, 'k-', marker='x') 
+        
+        
+        
+        
         #ax3b.plot(time, np.rad2deg(tilt), 'b-', marker='x') 
         
         #Add orbital positions to right hand plots. 
