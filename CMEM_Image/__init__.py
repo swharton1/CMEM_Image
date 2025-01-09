@@ -35,3 +35,5 @@ if "PPMLR_PATH" not in os.environ:
     os.environ["PPMLR_PATH"] = "/data/sol-ionosphere/SMILE/PPMLR/"
 if "BATSRUS_PATH" not in os.environ:
     os.environ["BATSRUS_PATH"] = "/data/smile/BATSRUS/"
+if "OPENGGCM_PATH" not in os.environ:
+    os.environ["OPENGGCM_PATH"] = "/data/smile/OpenGGCM/"
