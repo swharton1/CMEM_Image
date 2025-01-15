@@ -30,7 +30,7 @@ import os
 if "PLOT_PATH" not in os.environ: 
     os.environ["PLOT_PATH"] = "/home/s/sw682/Code/plots/CMEM_Image_plots/"
 if "PICKLE_PATH" not in os.environ:
-    os.environ["PICKLE_PATH"] = "/data/sol-ionosphere/sw682/CMEM_Image_pickled_models/" 
+    os.environ["PICKLE_PATH"] = "/data/sol-ionosphere/sw682/pickled_files/CMEM_Image_pickled_models/" 
 if "PPMLR_PATH" not in os.environ:
     os.environ["PPMLR_PATH"] = "/data/sol-ionosphere/SMILE/PPMLR/"
 if "BATSRUS_PATH" not in os.environ:
