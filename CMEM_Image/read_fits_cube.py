@@ -93,6 +93,10 @@ class read_fits_cube():
                     self.y_3d = self.y_3d[:,:,i[0]]
                     self.z_3d = self.z_3d[:,:,i[0]]
                     self.eta_3d = self.eta_3d[:,:,i[0]]
+                    
+                    #Bound 1D x array too. 
+                    j = np.where(self.x >= xmin) 
+                    self.x = self.x[j]
 
                 if xmax is not None: 
                     i = np.where(self.x_3d[0][0] < xmax) 
@@ -101,6 +105,10 @@ class read_fits_cube():
                     self.z_3d = self.z_3d[:,:,i[0]]
                     self.eta_3d = self.eta_3d[:,:,i[0]]
                 
+                    #Bound 1D x array too. 
+                    j = np.where(self.x < xmax) 
+                    self.x = self.x[j]
+                    
                 if ymin is not None: 
                     j = np.where(self.y_3d[0,:,0] >= ymin)
                     self.x_3d = self.x_3d[:,j[0],:]
@@ -108,6 +116,10 @@ class read_fits_cube():
                     self.z_3d = self.z_3d[:,j[0],:]
                     self.eta_3d = self.eta_3d[:,j[0],:]
 
+                    #Bound 1D x array too. 
+                    j = np.where(self.y >= ymin) 
+                    self.y = self.y[j]
+                    
                 if ymax is not None: 
                     j = np.where(self.y_3d[0,:,0] < ymax)
                     self.x_3d = self.x_3d[:,j[0],:]
@@ -115,6 +127,10 @@ class read_fits_cube():
                     self.z_3d = self.z_3d[:,j[0],:]
                     self.eta_3d = self.eta_3d[:,j[0],:]
 
+                    #Bound 1D x array too. 
+                    j = np.where(self.y < ymax) 
+                    self.y = self.y[j]
+                    
                 if zmin is not None:
                     k = np.where(self.z_3d[:,0,0] >= zmin)
                     self.x_3d = self.x_3d[k[0],:,:]
@@ -122,6 +138,10 @@ class read_fits_cube():
                     self.z_3d = self.z_3d[k[0],:,:]
                     self.eta_3d = self.eta_3d[k[0],:,:]
 
+                    #Bound 1D x array too. 
+                    j = np.where(self.z >= zmin) 
+                    self.z = self.z[j]
+                    
                 if zmax is not None:
                     k = np.where(self.z_3d[:,0,0] < zmax)
                     self.x_3d = self.x_3d[k[0],:,:]
@@ -129,6 +149,9 @@ class read_fits_cube():
                     self.z_3d = self.z_3d[k[0],:,:]
                     self.eta_3d = self.eta_3d[k[0],:,:]
 
+                    #Bound 1D x array too. 
+                    j = np.where(self.z < zmax) 
+                    self.z = self.z[j]
 
         except (FileNotFoundError, IOError):
             print ("Filename not found: {}".format(self.filename))
