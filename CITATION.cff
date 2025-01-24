@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Wharton"
+  given-names: "S. J. "
+  orcid: "https://orcid.org/0000-0001-7039-6803"
+
+title: "CMEM Image"
+version: 1.0.0
+date-released: 2025
+url: "https://github.com/swharton1/CMEM_Image/"
