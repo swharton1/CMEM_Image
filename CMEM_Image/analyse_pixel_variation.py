@@ -141,7 +141,7 @@ class analyse_pixel_all():
             
             ax.xaxis.set_minor_locator(MultipleLocator(1))
             ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-            ax.set_ylim(data['f.25']-1, data['f.25']+1)
+            ax.set_ylim(data['f.25']-0.5, data['f.25']+0.5)
             ax.grid(which='both')
             
             #Add title to top plot. 

@@ -221,7 +221,10 @@ class read_fits_cube():
         
         # Get max dIx third. 
         # Get difference between etad values. 
-        dIx = np.array([etad[i+1] - etad[i] for i in range(len(etad) - 1)])
+        if self.filetype == 'OPENGGCM':
+            dIx = -np.array([etad[i+1] - etad[i] for i in range(len(etad) - 1)])
+        else:
+            dIx = np.array([etad[i+1] - etad[i] for i in range(len(etad) - 1)])
 
         # Get centre point positions for radial direction. 
         xp_cent = xp + (xp[1]-xp[0])/2

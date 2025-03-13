@@ -151,7 +151,7 @@ class analyse_tilt_all():
             ax.set_xticks(tilt_full) 
             ax.xaxis.set_minor_locator(MultipleLocator(10))
             ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-            ax.set_ylim(data['f.25']-1, data['f.25']+1)
+            ax.set_ylim(data['f.25']-0.5, data['f.25']+0.5)
             ax.grid(which='both')
             
             #Add title to top plot. 

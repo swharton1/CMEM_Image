@@ -80,7 +80,7 @@ class ppmlr_image():
         
         #You will need this for interpn. 
         self.points_original = (self.ppmlr.z, self.ppmlr.y, self.ppmlr.x) 
-        pdb.set_trace()
+        
         #Define edges of cube. 
         self.xmin = self.ppmlr.x.min()
         self.xmax = self.ppmlr.x.max()
@@ -93,7 +93,7 @@ class ppmlr_image():
         pxn = self.smile.xpos
         pyn = self.smile.ypos
         pzn = self.smile.zpos 
-        pdb.set_trace()
+        
         
         #You should only do this on points inside the cube. 
         inside = np.where((pxn < self.xmax) & (pxn > self.xmin) & (pyn < self.ymax) & (pyn > self.ymin) & (pzn < self.zmax) & (pzn > self.zmin))

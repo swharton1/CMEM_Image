@@ -77,8 +77,10 @@ class smile_limb():
             self.radial_constraint = True 
         else:
             self.radial_constraint = False
-            
-        if self.limb_c-self.alpha_angle < np.deg2rad(90-35.83):
+        
+        #ANDY SAID TO UPDATE THE 35.83 TO 40 DEGREES. 
+        #APPARENTLY THERE IS AN ERROR IN THE SMILE PAPER.    
+        if self.limb_c-self.alpha_angle < np.deg2rad(90-40):
             self.solar_constraint = True
         else:
             self.solar_constraint = False 

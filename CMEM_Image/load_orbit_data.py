@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from spacepy import coordinates as coord
 from spacepy.time import Ticktock 
 from matplotlib.patches import Wedge, Polygon, Circle
+import os
 
 class orbit():
     '''This will contain functions to read in the orbit data.'''
@@ -19,6 +20,8 @@ class orbit():
         
         self.read_orbit_file()
         self.calc_gsm() 
+        
+        self.plot_path = os.environ.get("PLOT_PATH")
         
     def read_orbit_file(self):
         '''This actually reads the file and returns the information.'''
@@ -169,6 +172,9 @@ class orbit():
         
         fig.text(0.5,0.95,'{} - {}'.format(self.dtime[0].strftime("%Y%m%d %H:%M"),self.dtime[-1].strftime("%Y%m%d %H:%M")), ha='center', fontsize=12)
         
+        #Save the figure. 
+        print('Saved: ',self.plot_path+'new_orbits/orbit_gse_gsm_{:0>2}.png'.format(self.orbit_num))
+        fig.savefig(self.plot_path+'new_orbits/orbit_gse_gsm_{:0>2}.png'.format(self.orbit_num))
         
         
     def make_earth_2d(self, ax, rotation=0):
@@ -186,4 +192,30 @@ class orbit():
         verts2 = [[xval2[i],yval2[i]] for i in range(len(xval2))]
         
         polygon2 = Polygon(verts2, closed=True, edgecolor='navy', facecolor='navy', alpha=1) 
-        ax.add_patch(polygon2)        
+        ax.add_patch(polygon2)   
+        
+        
+        
+def compare_aims(orbit_num=1):
+    '''This will compare the aim from my calculation with that in Andy's file.'''
+    
+    from . import smile_fov_limb 
+    
+    #Get information in orbit file. 
+    orbit_info = orbit(orbit_num=orbit_num)  
+    
+    #Loop through each orbital position for just a few positions. 
+    for i in range(len(orbit_info.data['x_gse'])):
+    
+        #Get position. 
+        smile_loc = (orbit_info.data['x_gse'][i], orbit_info.data['y_gse'][i], orbit_info.data['z_gse'][i])
+        print ('SMILE Loc: ', smile_loc)
+        
+        #Get aim in file. 
+        aim_file = orbit_info.data['aim'][i]
+        
+        #Make SMILE object.
+        smile = smile_fov_limb.smile_limb(n_pixels=20, m_pixels=10, smile_loc=smile_loc)
+        
+        print ('Aim File: ', aim_file, 'Aim Sam: ', smile.target_loc[0], 'Diff: ', aim_file-smile.target_loc[0])
+       

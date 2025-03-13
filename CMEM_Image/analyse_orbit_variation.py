@@ -11,7 +11,7 @@ from matplotlib.patches import Wedge, Polygon, Circle
 class analyse_orbit():
     '''This will contain any plotting functions needed'''
     
-    def __init__(self, fname='orbital_limb_output_newsmile.pkl', orbit_folder_name='20260402-20260404/', ppmlr_folder='S05D20V400B0000-05rad.fits/'):
+    def __init__(self, fname='orbital_limb_output_newsmile.pkl', orbit_folder_name='orbit_10/', ppmlr_folder='S05D20V400B0000-05rad.fits/'):
         '''Sorts out paths and reads in the file.'''
         
         self.fname = fname 
@@ -27,7 +27,7 @@ class analyse_orbit():
             pickle_dict = pickle.load(f)
         return pickle_dict
     
-    def plot_orbit(self, add_cost=False, figname='Orbit_1_analysis.png', aim_ylim=[4,12], smile_xlim=[-10,15], smile_ylim=[-10,10], smile_zlim=[-5,22]):
+    def plot_orbit(self, add_cost=False, figname='Orbit_04_analysis.png', aim_ylim=[4,12], smile_xlim=[-10,15], smile_ylim=[-10,10], smile_zlim=[-5,22]):
         '''This will plot a graph of how the subsolar magnetopause radii 
         determined by CMEM and extracted from the PPMLR simulation vary
         with the number of pixels. This will show us the systematic error.'''
@@ -46,6 +46,10 @@ class analyse_orbit():
         xgsm = np.array(self.target_dict['x_gsm'])
         ygsm = np.array(self.target_dict['y_gsm'])
         zgsm = np.array(self.target_dict['z_gsm']) 
+        xgse = np.array(self.target_dict['x_gse'])
+        ygse = np.array(self.target_dict['y_gse'])
+        zgse = np.array(self.target_dict['z_gse']) 
+        
         target_loc = np.array(self.target_dict['target_loc']).T[0]
         min_cost = np.array(self.target_dict['min_cost'])
         #tilt = np.array(self.target_dict['tilt']) 
@@ -66,7 +70,7 @@ class analyse_orbit():
         
         #Make the figure. 
         if add_cost:
-            fig = plt.figure(figsize=(6,8))
+            fig = plt.figure(figsize=(6,6))
             fig.subplots_adjust(bottom=0.10)
             ax = fig.add_subplot(311) 
             ax2 = fig.add_subplot(312)
@@ -79,19 +83,23 @@ class analyse_orbit():
             ax3.set_ylabel('Min. Cost [keV cm'+r'$^{-3}$'+' s'+r'$^{-1}$'+' sr'+r'$^{-1}$')
         
         else:
-            fig = plt.figure(figsize=(6,6))
-            gs = GridSpec(11,3,figure=fig)
+            fig = plt.figure(figsize=(6,8))
+            gs = GridSpec(15,3,figure=fig)
             fig.subplots_adjust(bottom=0.10, wspace=0.7, right=0.9, hspace=0.2, top=0.9)
             ax = fig.add_subplot(gs[0:3, 0:3]) 
             #ax2 = fig.add_subplot(gs[1,0:2])
             ax3 = fig.add_subplot(gs[4:7,0:3])
             
-            #Add small plots to show SMILE position. 
-            ax4 = fig.add_subplot(gs[8:,0])
-            ax5 = fig.add_subplot(gs[8:,1])
-            ax6 = fig.add_subplot(gs[8:,2])
+            #Add small plots to show SMILE position in GSE.  
+            ax4 = fig.add_subplot(gs[8:11,0])
+            ax5 = fig.add_subplot(gs[8:11,1])
+            ax6 = fig.add_subplot(gs[8:11,2])
             
-                       
+            #Add small plots to show SMILE position in GSM.  
+            ax7 = fig.add_subplot(gs[12:,0])
+            ax8 = fig.add_subplot(gs[12:,1])
+            ax9 = fig.add_subplot(gs[12:,2])
+                      
             #Add labels. 
             ax.set_xlabel('Observing Time (hours)', fontsize=8) 
             ax3.set_xlabel('Observing Time (hours)', fontsize=8) 
@@ -99,17 +107,28 @@ class analyse_orbit():
             #ax2.set_ylabel('GSM Spacecraft \nPosition [RE]') 
             ax3.set_ylabel('Aim Point [RE]', fontsize=8) 
             
+            #Sort axes for orbital plots. 
             ax4.set(xlim=smile_xlim, ylim=smile_zlim)
             ax5.set(xlim=smile_xlim, ylim=smile_ylim)
             ax6.set(xlim=smile_ylim, ylim=smile_zlim) 
-            ax4.set_xlabel(r'$X_{GSM}$', fontsize=8)
-            ax4.set_ylabel(r'$Z_{GSM}$', fontsize=8)
-            ax5.set_xlabel(r'$X_{GSM}$', fontsize=8)
-            ax5.set_ylabel(r'$Y_{GSM}$', fontsize=8)
-            ax6.set_xlabel(r'$Y_{GSM}$', fontsize=8)
-            ax6.set_ylabel(r'$Z_{GSM}$', fontsize=8)
+            ax4.set_xlabel(r'$X_{GSE}$'+' '+r'$[R_E]$', fontsize=8)
+            ax4.set_ylabel(r'$Z_{GSE}$'+' '+r'$[R_E]$', fontsize=8)
+            ax5.set_xlabel(r'$X_{GSE}$'+' '+r'$[R_E]$', fontsize=8)
+            ax5.set_ylabel(r'$Y_{GSE}$'+' '+r'$[R_E]$', fontsize=8)
+            ax6.set_xlabel(r'$Y_{GSE}$'+' '+r'$[R_E]$', fontsize=8)
+            ax6.set_ylabel(r'$Z_{GSE}$'+' '+r'$[R_E]$', fontsize=8)
             
-      
+            #Sort axes for orbital plots. 
+            ax7.set(xlim=smile_xlim, ylim=smile_zlim)
+            ax8.set(xlim=smile_xlim, ylim=smile_ylim)
+            ax9.set(xlim=smile_ylim, ylim=smile_zlim) 
+            ax7.set_xlabel(r'$X_{GSM}$'+' '+r'$[R_E]$', fontsize=8)
+            ax7.set_ylabel(r'$Z_{GSM}$'+' '+r'$[R_E]$', fontsize=8)
+            ax8.set_xlabel(r'$X_{GSM}$'+' '+r'$[R_E]$', fontsize=8)
+            ax8.set_ylabel(r'$Y_{GSM}$'+' '+r'$[R_E]$', fontsize=8)
+            ax9.set_xlabel(r'$Y_{GSM}$'+' '+r'$[R_E]$', fontsize=8)
+            ax9.set_ylabel(r'$Z_{GSM}$'+' '+r'$[R_E]$', fontsize=8)
+            
             
             #ax3b = ax3.twinx()
             #ax3b.set_ylabel('Tilt Angle [deg]', color='b') 
@@ -150,9 +169,9 @@ class analyse_orbit():
         ax4.grid()
         ax5.grid()
         ax6.grid()
-        ax4.plot(xgsm, zgsm, 'k', lw=0.5)
-        ax5.plot(xgsm, ygsm, 'k', lw=0.5)
-        ax6.plot(ygsm, zgsm, 'k', lw=0.5) 
+        ax4.plot(xgse, zgse, 'k', lw=0.5)
+        ax5.plot(xgse, ygse, 'k', lw=0.5)
+        ax6.plot(ygse, zgse, 'k', lw=0.5) 
         self.make_earth(ax4, rotation=-90)
         self.make_earth(ax5, rotation=-90)
         circle = Circle((0,0), 1, facecolor='w', edgecolor='navy')
@@ -161,28 +180,63 @@ class analyse_orbit():
         ax5.set_aspect('equal')
         ax6.set_aspect('equal')
         
-        #Add a mark every five hours. 
-        ax4.scatter(xgsm[::5], zgsm[::5], c='k', marker='x', s=10, lw=0.5)
-        ax5.scatter(xgsm[::5], ygsm[::5], c='k', marker='x', s=10, lw=0.5)
-        ax6.scatter(ygsm[::5], zgsm[::5], c='k', marker='x', s=10, lw=0.5) 
+        #Add orbital positions to right hand plots. 
+        ax7.grid()
+        ax8.grid()
+        ax9.grid()
+        ax7.plot(xgsm, zgsm, 'k', lw=0.5)
+        ax8.plot(xgsm, ygsm, 'k', lw=0.5)
+        ax9.plot(ygsm, zgsm, 'k', lw=0.5) 
+        self.make_earth(ax7, rotation=-90)
+        self.make_earth(ax8, rotation=-90)
+        circle = Circle((0,0), 1, facecolor='w', edgecolor='navy')
+        ax9.add_patch(circle)
+        ax7.set_aspect('equal')
+        ax8.set_aspect('equal')
+        ax9.set_aspect('equal')
         
+        #Add a mark every five hours. 
+        ax4.scatter(xgse[::5], zgse[::5], c='k', marker='x', s=10, lw=0.5)
+        ax5.scatter(xgse[::5], ygse[::5], c='k', marker='x', s=10, lw=0.5)
+        ax6.scatter(ygse[::5], zgse[::5], c='k', marker='x', s=10, lw=0.5) 
+        
+        #Add a mark every five hours. 
+        ax7.scatter(xgsm[::5], zgsm[::5], c='k', marker='x', s=10, lw=0.5)
+        ax8.scatter(xgsm[::5], ygsm[::5], c='k', marker='x', s=10, lw=0.5)
+        ax9.scatter(ygsm[::5], zgsm[::5], c='k', marker='x', s=10, lw=0.5) 
         
         
         #Add time in hours since start of observing time. 
-        xmax4 = xgsm[zgsm==zgsm.max()]
-        xmax5 = xgsm[ygsm==ygsm.max()]
-        ymax6 = ygsm[zgsm==zgsm.max()]
+        xmax4 = xgse[zgse==zgse.max()]
+        xmax5 = xgse[ygse==ygse.max()]
+        ymax6 = ygse[zgse==zgse.max()]
+        
+        for t in range(len(xgse[::5])):
+             
+            ha4='right' if xgse[::5][t] < xmax4 else 'left'
+            ax4.text(xgse[::5][t], zgse[::5][t], delta_time[::5][t], fontsize=8, ha=ha4)
+            
+            ha5='right' if xgse[::5][t] < xmax5 else 'left'
+            ax5.text(xgse[::5][t], ygse[::5][t], delta_time[::5][t], fontsize=8, ha=ha5)
+            
+            ha6='right' if ygse[::5][t] < ymax6 else 'left'
+            ax6.text(ygse[::5][t], zgse[::5][t], delta_time[::5][t], fontsize=8, ha=ha6)
+            
+        #Add time in hours since start of observing time. 
+        xmax7 = xgsm[zgsm==zgsm.max()]
+        xmax8 = xgsm[ygsm==ygsm.max()]
+        ymax9 = ygsm[zgsm==zgsm.max()]
         
         for t in range(len(xgsm[::5])):
              
-            ha4='right' if xgsm[::5][t] < xmax4 else 'left'
-            ax4.text(xgsm[::5][t], zgsm[::5][t], delta_time[::5][t], fontsize=8, ha=ha4)
+            ha7='right' if xgsm[::5][t] < xmax7 else 'left'
+            ax7.text(xgsm[::5][t], zgsm[::5][t], delta_time[::5][t], fontsize=8, ha=ha7)
             
-            ha5='right' if xgsm[::5][t] < xmax5 else 'left'
-            ax5.text(xgsm[::5][t], ygsm[::5][t], delta_time[::5][t], fontsize=8, ha=ha5)
+            ha8='right' if xgsm[::5][t] < xmax8 else 'left'
+            ax8.text(xgsm[::5][t], ygsm[::5][t], delta_time[::5][t], fontsize=8, ha=ha8)
             
-            ha6='right' if ygsm[::5][t] < ymax6 else 'left'
-            ax6.text(ygsm[::5][t], zgsm[::5][t], delta_time[::5][t], fontsize=8, ha=ha6)
+            ha9='right' if ygsm[::5][t] < ymax9 else 'left'
+            ax9.text(ygsm[::5][t], zgsm[::5][t], delta_time[::5][t], fontsize=8, ha=ha9)
             
         #Shrink fontsize for tickmarks. 
         fontsize=8
@@ -191,6 +245,9 @@ class analyse_orbit():
         ax4.tick_params(labelsize=fontsize)
         ax5.tick_params(labelsize=fontsize)
         ax6.tick_params(labelsize=fontsize)
+        ax7.tick_params(labelsize=fontsize)
+        ax8.tick_params(labelsize=fontsize)
+        ax9.tick_params(labelsize=fontsize)
         
         
         
@@ -225,8 +282,8 @@ class analyse_orbit():
         #    ax3.add_patch(rect6) 
         
         #Reset your limits. 
-        ax.set_xlim(xlims) 
-        ax.set_ylim(6.5,10.5)
+        ax.set_xlim(0,41) #HARDCODED HERE SO ORBITS MATCH. 
+        ax.set_ylim(7,10)
         #ax.legend(loc='best', fontsize=8)
         ax.grid() 
         
@@ -248,7 +305,7 @@ class analyse_orbit():
         #ax2.text(1.01, 0.79, 'z', color='g', ha='left', va='top', transform=ax2.transAxes, fontsize=8)
         #ax2.text(1.01, 0.69, 'r', color='k', ha='left', va='top', transform=ax2.transAxes, fontsize=8)
         
-        ax3.set_xlim(xlims)
+        ax3.set_xlim(0,41) #HARDCODED HERE SO ORBITS MATCH. 
         ax3.set_ylim(aim_ylim)
         ax3.grid()
         

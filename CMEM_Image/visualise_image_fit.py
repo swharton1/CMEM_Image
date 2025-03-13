@@ -491,10 +491,10 @@ class analyse_fit():
         #Add a label for the PPMLR subsolar magnetopause position. 
         if add_fov_projection:
             fig.text(0.30, 0.2, r"$r_0$"+" = {:.2f}".format(self.model['maxIx'])+r"$R_E$", ha='center')
-            fig.text(0.60, 0.2, r"$r_0$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
+            fig.text(0.61, 0.2, r"$r_{CMEM}$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
         else:
             fig.text(0.42, 0.2, r"$r_0$"+" = {:.2f}".format(self.model['maxIx'])+r"$R_E$", ha='center')
-            fig.text(0.90, 0.2, r"$r_0$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
+            fig.text(0.90, 0.2, r"$r_{CMEM}$"+" = {:.2f}".format(self.rmp_sub[0])+r"$R_E$", ha='center')
         
         if add_fov_projection:
             #Add the 3rd axis to show the projection angles better. 
@@ -566,6 +566,7 @@ class analyse_fit():
                 mp_tag = 'mp' if add_mp_projection else ''
                 fov_tag = 'fov' if add_fov_projection else ''
                 fig.savefig(self.plot_path+"fitted_images/{}_images_{}_{}{}.png".format(self.filename.split("_.pkl")[0], mp_tag, fov_tag, savetag))
+                print ('Saved: ', self.plot_path+"fitted_images/{}_images_{}_{}{}.png".format(self.filename.split("_.pkl")[0], mp_tag, fov_tag, savetag))
             else:
                 #You need the full path here. 
                 fig.savefig(self.plot_path+fname)
