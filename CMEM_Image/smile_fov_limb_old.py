@@ -399,7 +399,11 @@ class smile_limb():
         
         #Add arcs for angles. 
         total_angle = np.rad2deg(self.limb_c - self.alpha_angle) 
-        arc_alpha = Arc((self.smile_loc[0],self.smile_loc[2]), 3, 3, angle=-90, theta1=0, theta2=total_angle, color='k')
+        print (total_angle)
+        #arc_alpha = Arc((self.smile_loc[0],self.smile_loc[2]), 3, 3, angle=-90, theta1=0, theta2=total_angle, color='k')
+        arc_alpha = Arc((self.smile_loc[0], self.smile_loc[2]), 3, 3, angle=-90, theta1=0, theta2=-np.rad2deg(self.alpha_angle), color='k') 
+        ax.add_patch(arc_alpha)
+        arc_alpha = Arc((self.smile_loc[0], self.smile_loc[2]), 3.5, 3.5, angle=-90, theta1=-np.rad2deg(self.alpha_angle), theta2=total_angle, color='k') 
         ax.add_patch(arc_alpha)
         
         #Add vertical line. 
@@ -420,7 +424,7 @@ class smile_limb():
         
         ax.text(self.smile_loc[0]+0.3, self.smile_loc[2]-2, r'$\alpha$', rotation=0, va='center', ha='center')
         
-        ax.text(self.smile_loc[0]+1.2, self.smile_loc[2]-1.8, "l'", rotation=0, va='center', ha='center')
+        ax.text(self.smile_loc[0]+1.5, self.smile_loc[2]-1.8, "l+r", rotation=0, va='center', ha='center')
         
         ax.set_aspect('equal')
         
@@ -428,6 +432,7 @@ class smile_limb():
         ax.set_axis_off()
         
         if save:
+            print ('Saving: ',self.plot_path+'Orbital_limb_diagram.png') 
             fig.savefig(self.plot_path+'Orbital_limb_diagram.png', dpi=800)
     
     
