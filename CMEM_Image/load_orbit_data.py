@@ -8,6 +8,8 @@ from spacepy.time import Ticktock
 from matplotlib.patches import Wedge, Polygon, Circle
 import os
 
+from SXI_Core import get_earth 
+
 class orbit():
     '''This will contain functions to read in the orbit data.'''
     
@@ -122,7 +124,7 @@ class orbit():
         ax1.set_xlabel(r'$x_{GSE}$')
         ax1.set_ylabel(r'$z_{GSE}$') 
         ax1.set_title('Orbit in GSE')
-        self.make_earth_2d(ax1, rotation=-90)
+        get_earth.make_earth(ax1, rotation=-90)
         ax1.set_aspect('equal')
         
         ax2 = fig.add_subplot(223)
@@ -135,7 +137,7 @@ class orbit():
         ax2.set_xlabel(r'$x_{GSE}$')
         ax2.set_ylabel(r'$y_{GSE}$') 
         #ax2.set_title('Orbit in GSE')
-        self.make_earth_2d(ax2, rotation=-90)
+        get_earth.make_earth(ax2, rotation=-90)
         ax2.set_aspect('equal')
         
         ax3 = fig.add_subplot(222)
@@ -148,7 +150,7 @@ class orbit():
         ax3.set_xlabel(r'$x_{GSM}$')
         ax3.set_ylabel(r'$z_{GSM}$') 
         ax3.set_title('Orbit in GSM')
-        self.make_earth_2d(ax3, rotation=-90)
+        get_earth.make_earth(ax3, rotation=-90)
         ax3.set_aspect('equal')
         
         ax4 = fig.add_subplot(224)
@@ -161,7 +163,7 @@ class orbit():
         ax4.set_xlabel(r'$x_{GSM}$')
         ax4.set_ylabel(r'$y_{GSM}$') 
         #ax4.set_title('Orbit in GSM')
-        self.make_earth_2d(ax4, rotation=-90)
+        get_earth.make_earth(ax4, rotation=-90)
         ax4.set_aspect('equal')
         
         #fig.text(0.95, 0.05, 'Outbound', color='cyan', fontsize=8, ha='right')
@@ -176,23 +178,7 @@ class orbit():
         print('Saved: ',self.plot_path+'new_orbits/orbit_gse_gsm_{:0>2}.png'.format(self.orbit_num))
         fig.savefig(self.plot_path+'new_orbits/orbit_gse_gsm_{:0>2}.png'.format(self.orbit_num))
         
-        
-    def make_earth_2d(self, ax, rotation=0):
-        '''This will add a little plot of the Earth on top for reference. '''
-
-        # Add white circle first. 
-        r=1
-        circle = Circle((0,0), r, facecolor='w', edgecolor='navy')
-        ax.add_patch(circle)
-
-        # Add nightside. 
-        theta2 = np.arange(181)-180+rotation
-        xval2 = np.append(r*np.cos(theta2*(np.pi/180)),0)
-        yval2 = np.append(r*np.sin(theta2*(np.pi/180)),0)
-        verts2 = [[xval2[i],yval2[i]] for i in range(len(xval2))]
-        
-        polygon2 = Polygon(verts2, closed=True, edgecolor='navy', facecolor='navy', alpha=1) 
-        ax.add_patch(polygon2)   
+ 
         
         
         

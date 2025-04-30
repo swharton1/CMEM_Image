@@ -11,6 +11,8 @@ from spacepy.time import Ticktock
 import datetime as dt
 from matplotlib.patches import Wedge, Polygon, Circle
 
+from SXI_Core import get_earth 
+
 class ellipse():
     '''This will make an object to describe an ellipse. '''
     
@@ -45,7 +47,7 @@ class ellipse():
         print ('Semiparameter = ', self.p/self.RE) 
         
         
-        self.plot_path = os.environ.get("PLOT_PATH")+"orbits/"
+        self.plot_path = os.environ.get("PLOT_PATH")+"elliptical_orbits/"
         
         #self.p = p*self.RE
         #self.e = e
@@ -356,7 +358,7 @@ class ellipse():
         ax1.set_zlim(lims)
         ax1.set_aspect('equal')
         
-        self.add_earth(ax1)
+        get_earth.make_earth_3d(ax1)
         
         ax1.view_init(elev,azim) 
         
@@ -386,7 +388,7 @@ class ellipse():
         ax2.set_zlim(lims)
         ax2.set_aspect('equal')
         
-        self.add_earth(ax2)
+        get_earth.make_earth_3d(ax2)
         
         ax2.view_init(elev,azim) 
         
@@ -404,7 +406,7 @@ class ellipse():
         ax1.set_xlabel(r'$x_{GSE}$')
         ax1.set_ylabel(r'$z_{GSE}$') 
         ax1.set_title('Orbit in GSE')
-        self.make_earth_2d(ax1, rotation=-90)
+        get_earth.make_earth(ax1, rotation=-90)
         ax1.set_aspect('equal')
         
         ax2 = fig.add_subplot(223)
@@ -413,7 +415,7 @@ class ellipse():
         ax2.set_xlabel(r'$x_{GSE}$')
         ax2.set_ylabel(r'$y_{GSE}$') 
         #ax2.set_title('Orbit in GSE')
-        self.make_earth_2d(ax2, rotation=-90)
+        get_earth.make_earth(ax2, rotation=-90)
         ax2.set_aspect('equal')
         
         ax3 = fig.add_subplot(222)
@@ -422,7 +424,7 @@ class ellipse():
         ax3.set_xlabel(r'$x_{GSM}$')
         ax3.set_ylabel(r'$z_{GSM}$') 
         ax3.set_title('Orbit in GSM')
-        self.make_earth_2d(ax3, rotation=-90)
+        get_earth.make_earth(ax3, rotation=-90)
         ax3.set_aspect('equal')
         
         ax4 = fig.add_subplot(224)
@@ -432,7 +434,7 @@ class ellipse():
         ax4.set_xlabel(r'$x_{GSM}$')
         ax4.set_ylabel(r'$y_{GSM}$') 
         #ax4.set_title('Orbit in GSM')
-        self.make_earth_2d(ax4, rotation=-90)
+        get_earth.make_earth(ax4, rotation=-90)
         ax4.set_aspect('equal')
         
         fig.text(0.95, 0.05, 'Outbound', color='cyan', fontsize=8, ha='right')
@@ -537,32 +539,4 @@ class ellipse():
         else:
             fig.savefig(self.plot_path+"example_orbital_params_nu.png") 
         
-    def add_earth(self, ax):
-        '''This will add a sphere for the Earth. '''
-        
-        #Create a spherical surface. 
-        radius = 1
-        u = np.linspace(0, 2*np.pi, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v))
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-
-        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
-        
-    def make_earth_2d(self, ax, rotation=0):
-        '''This will add a little plot of the Earth on top for reference. '''
-
-        # Add white circle first. 
-        r=1
-        circle = Circle((0,0), r, facecolor='w', edgecolor='navy')
-        ax.add_patch(circle)
-
-        # Add nightside. 
-        theta2 = np.arange(181)-180+rotation
-        xval2 = np.append(r*np.cos(theta2*(np.pi/180)),0)
-        yval2 = np.append(r*np.sin(theta2*(np.pi/180)),0)
-        verts2 = [[xval2[i],yval2[i]] for i in range(len(xval2))]
-        
-        polygon2 = Polygon(verts2, closed=True, edgecolor='navy', facecolor='navy', alpha=1) 
-        ax.add_patch(polygon2)    
+  

@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+from SXI_Core import calc_pressures
+from SXI_Core import get_earth 
+
 class ppmlr_image():
     '''This class takes in the ppmlr simulation object and the smile fov object and calculates an image through the simulation.'''
     
@@ -22,8 +25,8 @@ class ppmlr_image():
         self.bx = ppmlr.bx
         self.by = ppmlr.by
         self.bz = ppmlr.bz
-        self.pdyn = self.calc_dynamic_pressure()
-        self.pmag = self.calc_magnetic_pressure()
+        self.pdyn = calc_pressures.calc_dynamic_pressure(self.vx, self.vy, self.vz, self.density)
+        self.pmag = calc_pressures.calc_magnetic_pressure(self.bx, self.by, self.bz)
         
         #Calculate the emissivity along the LOS. 
         self.get_weighted_eta_in_fov()
@@ -33,41 +36,7 @@ class ppmlr_image():
         
         self.plot_path = os.environ.get("PLOT_PATH") 
     
-    def calc_dynamic_pressure(self):
-        '''Calculate this as it's a parameter in some models.'''
 
-        # Assume average ion mass = mass of proton. 
-        mp = 0.00000000000000000000000000167
-        
-        # Calculate v in m/s 
-        v = (self.vx**2 + self.vy**2 + self.vz**2)**0.5
-        v = v*1000 
-
-        # Convert number of particles /cm^3 to /m^3. 
-        n = self.density*1000000
-
-        # Calculate dynamic pressure first in Pascals, then nPa. 
-        dyn_pressure = 0.5*mp*n*(v**2)
-        dyn_pressure = dyn_pressure*1000000000
-
-        return (dyn_pressure)
-
-    def calc_magnetic_pressure(self):
-        '''Calculate the magnetic pressure'''
-
-        # Calculate magnitude of B in T. 
-        B = (self.bx**2 + self.by**2 + self.bz**2)**0.5
-        B = B*0.000000001
-
-        # mu0
-        mu0 = 4*np.pi*0.0000001
-
-        # Calculate magnetic pressure in Pa, then nPa. 
-        mag_pressure = (B**2)/(2*mu0)
-        mag_pressure = mag_pressure*1000000000
-
-        return mag_pressure
-        
     #THIS CODE WILL WORK OUT THE EMISSIVITY ALONG THE LOS FROM THE PPMLR MODEL.
     ###########################################################################
     
@@ -288,7 +257,7 @@ class ppmlr_image():
         self.add_fov_boundaries(ax2)
         
         #Add the Earth on. 
-        self.add_earth(ax2) 
+        get_earth.make_earth_3d(ax2) 
         
         #Add orbit ellipse if it is provided.
         if ellipse is not None: 
@@ -414,34 +383,4 @@ class ppmlr_image():
         ax2.plot([self.smile.xpos[-1][0][-1],self.smile.xpos[0][0][-1]], [self.smile.ypos[-1][0][-1],self.smile.ypos[0][0][-1]], [self.smile.zpos[-1][0][-1],self.smile.zpos[0][0][-1]], 'k')
     
 
-        
-        
-    def add_earth(self, ax):
-        '''This will add a sphere for the Earth. '''
-        
-        #Create a spherical surface. 
-        radius = 1
-        u = np.linspace(0, 2*np.pi, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v))
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-
-        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
-        
-    def sig_figs(self, x: float, precision: int):
-        """
-        Rounds a number to number of significant figures
-        Parameters:
-        - x - the number to be rounded
-        - precision (integer) - the number of significant figures
-        Returns:
-        - float
-        """
-
-        x = float(x)
-        precision = int(precision)
-
-        return np.round(x, -int(np.floor(np.log10(abs(x)))) + (precision - 1))
-        
         

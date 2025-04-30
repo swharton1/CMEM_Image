@@ -7,6 +7,8 @@ import os
 from matplotlib.patches import Wedge, Polygon, Circle, Arc
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+from SXI_Core import get_earth 
+
 class smile_limb():
     '''This object will use the spacecraft position and limb angle to work out 
     the pointing and target directions, along with everything else.''' 
@@ -222,7 +224,7 @@ class smile_limb():
         #Add yi unit vector. 
         ax.plot([self.b[0], self.b[0]+self.yi_unit[0]], [self.b[1], self.b[1]+self.yi_unit[1]], [self.b[2], self.b[2]+self.yi_unit[2]], c='orange', label='yi')
         
-        self.add_earth(ax)
+        get_earth.make_earth_3d(ax)
         
         #Sort legend and labels. 
         ax.legend(loc='best')
@@ -276,7 +278,7 @@ class smile_limb():
         ax.set_ylabel('y')
         ax.set_zlabel('z')
         
-        self.add_earth(ax)
+        get_earth.make_earth_3d(ax)
         ax.set_aspect('equal') 
         
         ax.view_init(elev,azim) 
@@ -313,15 +315,15 @@ class smile_limb():
         return 
         
            
-    def add_earth(self, ax):
-        '''This will add a sphere for the Earth. '''
+#    def add_earth(self, ax):
+#        '''This will add a sphere for the Earth. '''
         
         #Create a spherical surface. 
-        radius = 1
-        u = np.linspace(0, 2*np.pi, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v)) 
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+#        radius = 1
+#        u = np.linspace(0, 2*np.pi, 100) 
+#        v = np.linspace(0, np.pi, 100) 
+#        x = radius* np.outer(np.cos(u), np.sin(v)) 
+#        y = radius* np.outer(np.sin(u), np.sin(v))
+#        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
         
-        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
+#        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)

@@ -7,9 +7,10 @@ from time import process_time
 import pickle
 import os
 
-from . import set_initial_params as sip 
+from SXI_Core import set_initial_params as sip 
 from . import boundary_emissivity_functions as bef 
-from . import coord_conv as cconv
+from SXI_Core import coord_conv as cconv
+from SXI_Core import calc_pressures
 
 class fit_image():
     '''This class will try to fit a model image to a PPMLR image. '''
@@ -36,8 +37,8 @@ class fit_image():
         self.bx = ppmlr_image.bx
         self.by = ppmlr_image.by
         self.bz = ppmlr_image.bz
-        self.pdyn = self.calc_dynamic_pressure()
-        self.pmag = self.calc_magnetic_pressure()
+        self.pdyn = calc_pressures.calc_dynamic_pressure(self.vx, self.vy, self.vz, self.density)
+        self.pmag = calc_pressures.calc_magnetic_pressure(self.bx, self.by, self.bz)
         self.dipole = 0 
         
         # Get the r, theta and phi coordinates. 
@@ -55,41 +56,7 @@ class fit_image():
         # It's meant to be better than using __string__(self):
         return f"fit image object. Will fit a model image ('jorg' or 'cmem') to a ppmlr image.  "
     
-    def calc_dynamic_pressure(self):
-        '''Calculate this as it's a parameter in some models.'''
 
-        # Assume average ion mass = mass of proton. 
-        mp = 0.00000000000000000000000000167
-        
-        # Calculate v in m/s 
-        v = (self.vx**2 + self.vy**2 + self.vz**2)**0.5
-        v = v*1000 
-
-        # Convert number of particles /cm^3 to /m^3. 
-        n = self.density*1000000
-
-        # Calculate dynamic pressure first in Pascals, then nPa. 
-        dyn_pressure = 0.5*mp*n*(v**2)
-        dyn_pressure = dyn_pressure*1000000000
-
-        return (dyn_pressure)
-
-    def calc_magnetic_pressure(self):
-        '''Calculate the magnetic pressure'''
-
-        # Calculate magnitude of B in T. 
-        B = (self.bx**2 + self.by**2 + self.bz**2)**0.5
-        B = B*0.000000001
-
-        # mu0
-        mu0 = 4*np.pi*0.0000001
-
-        # Calculate magnetic pressure in Pa, then nPa. 
-        mag_pressure = (B**2)/(2*mu0)
-        mag_pressure = mag_pressure*1000000000
-
-        return mag_pressure
-        
     #COST FUNCTIONS
     ###############
 

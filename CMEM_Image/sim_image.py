@@ -8,9 +8,12 @@ import matplotlib.image as mpl_image
 from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
 
 from . import boundary_emissivity_functions as bef 
-from . import get_names_and_units as gnau 
-from . import set_initial_params as sip
-from . import coord_conv as cconv
+from SXI_Core import get_names_and_units as gnau 
+from SXI_Core import set_initial_params as sip
+from SXI_Core import coord_conv as cconv
+from SXI_Core import sig_figs
+from SXI_Core import get_earth 
+from SXI_Core import calc_pressures
 
 class image_sim(): 
     '''This is the object to simulate the image.''' 
@@ -32,8 +35,8 @@ class image_sim():
         self.bx = bx
         self.by = by
         self.bz = bz
-        self.pdyn = self.calc_dynamic_pressure()
-        self.pmag = self.calc_magnetic_pressure()
+        self.pdyn = calc_pressures.calc_dynamic_pressure(self.vx, self.vy, self.vz, self.density)
+        self.pmag = calc_pressures.calc_magnetic_pressure(self.bx, self.by, self.bz)
         self.dipole = dipole 
         
         #Extract the x, y and z coords along the lines of sight and 
@@ -49,40 +52,7 @@ class image_sim():
         #    self.get_emissivity_all_coords()
         #    print ('Completed emissivity calculation...')
             
-    def calc_dynamic_pressure(self):
-        '''Calculate this as it's a parameter in some models.'''
 
-        # Assume average ion mass = mass of proton. 
-        mp = 0.00000000000000000000000000167
-        
-        # Calculate v in m/s 
-        v = (self.vx**2 + self.vy**2 + self.vz**2)**0.5
-        v = v*1000 
-
-        # Convert number of particles /cm^3 to /m^3. 
-        n = self.density*1000000
-
-        # Calculate dynamic pressure first in Pascals, then nPa. 
-        dyn_pressure = 0.5*mp*n*(v**2)
-        dyn_pressure = dyn_pressure*1000000000
-
-        return (dyn_pressure)
-
-    def calc_magnetic_pressure(self):
-        '''Calculate the magnetic pressure'''
-
-        # Calculate magnitude of B in T. 
-        B = (self.bx**2 + self.by**2 + self.bz**2)**0.5
-        B = B*0.000000001
-
-        # mu0
-        mu0 = 4*np.pi*0.0000001
-
-        # Calculate magnetic pressure in Pa, then nPa. 
-        mag_pressure = (B**2)/(2*mu0)
-        mag_pressure = mag_pressure*1000000000
-
-        return mag_pressure
 
             
     def get_init_model_params(self, model="jorg", init_method=2, params0=None):
@@ -232,13 +202,13 @@ class image_sim():
         self.add_fov_boundaries(ax2)
         
         #Add the Earth on. 
-        self.add_earth(ax2) 
+        get_earth.make_earth_3d(ax2) 
         
         ax2.set_xlabel('x')
         ax2.set_ylabel('y')
         ax2.set_zlabel('z')
         ax2.set_xlim(-10,30)
-        ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({},{},{})\nAim Point: ({},{},{})'.format(*self.smile.smile_loc, *self.smile.target_loc))
+        ax2.set_title('n = {} cm'.format(self.density)+r'$^{-3}$'+'\nSMILE Coords: ({:.2f},{:.2f},{:.2f})\nAim Point: ({:.2f},{:.2f},{:.2f})'.format(*self.smile.smile_loc, *self.smile.target_loc))
         ax2.set_aspect('equal')
         ax2.view_init(elev,azim) 
         
@@ -249,7 +219,7 @@ class image_sim():
         parameter_units = [info[i][1] for i in info.keys()]
         for p,pval in enumerate(self.params0):
                 pv = pval 
-                label += "{}={} {}, ".format(parameter_names[p], self.sig_figs(pv,3), parameter_units[p])
+                label += "{}={} {}, ".format(parameter_names[p], sig_figs.sig_figs(pv,3), parameter_units[p])
                 if len(parameter_names)//2 == p+1:
                     label += "\n"
         
@@ -316,7 +286,7 @@ class image_sim():
         ax2.set_yticks([])
     
         #Add the Earth on. 
-        self.add_earth(ax1, color='w') 
+        get_earth.make_earth_3d(ax1, color='w') 
         
         #Make pixel information for image plot. 
         # Make pixel arrays for plotting. 
@@ -399,7 +369,7 @@ class image_sim():
         ax2.set_yticks([])
     
         #Add the Earth on. 
-        self.add_earth2(ax1) 
+        get_earth.make_earth_3d_2(ax1) 
         
         #Make pixel information for image plot. 
         # Make pixel arrays for plotting. 
@@ -517,53 +487,7 @@ class image_sim():
         ax2.plot([self.smile.xpos[-1][-1][-1],self.smile.xpos[-1][0][-1]], [self.smile.ypos[-1][-1][-1],self.smile.ypos[-1][0][-1]], [self.smile.zpos[-1][-1][-1],self.smile.zpos[-1][0][-1]], color, lw=lw)
         ax2.plot([self.smile.xpos[-1][0][-1],self.smile.xpos[0][0][-1]], [self.smile.ypos[-1][0][-1],self.smile.ypos[0][0][-1]], [self.smile.zpos[-1][0][-1],self.smile.zpos[0][0][-1]], color, lw=lw)
         
-    def add_earth(self, ax, color='k'):
-        '''This will add a sphere for the Earth. '''
-        
-        #Create a spherical surface. 
-        radius = 1
-        u = np.linspace(0, 2*np.pi, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v))
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
 
-        ax.plot_surface(x, y, z, color=color, lw=0, alpha=1)
-    
-    def add_earth2(self, ax):
-        '''This will add a sphere for the Earth. White on dayside, navy on nightside'''
-        
-        #Create a hemis-spherical surface that is white. 
-        radius = 1
-        u = np.linspace(-np.pi/2, np.pi/2, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v))
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-
-        ax.plot_surface(x, y, z, color='w', lw=0, alpha=1, edgecolor='w', antialiased=False, shade=False)
-        
-        u = np.linspace(np.pi/2, 3*np.pi/2, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v))
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-
-        ax.plot_surface(x, y, z, color='navy', lw=0, alpha=1, edgecolor='navy', antialiased=False, shade=False)
             
-    def sig_figs(self, x: float, precision: int):
-        """
-        Rounds a number to number of significant figures
-        Parameters:
-        - x - the number to be rounded
-        - precision (integer) - the number of significant figures
-        Returns:
-        - float
-        """
-
-        x = float(x)
-        precision = int(precision)
-
-        return np.round(x, -int(np.floor(np.log10(abs(x)))) + (precision - 1))
         
         

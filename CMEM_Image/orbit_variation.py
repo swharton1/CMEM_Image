@@ -11,6 +11,7 @@ import matplotlib.dates as dates
 import os
 from matplotlib.patches import Rectangle 
 
+from SXI_Core import get_earth 
 
 class orbit_variation():
     def __init__(self, stime=(2025,10,1), etime=(2025,10,3,3)): 
@@ -73,7 +74,7 @@ class orbit_variation():
         
         
         #Add the Earth. 
-        self.add_earth(ax) 
+        get_earth.make_earth_3d_2(ax) 
         
         #Add GSE Axes. 
         ax.plot(xlim,[0,0],[0,0],'k', lw=0.5)
@@ -331,26 +332,26 @@ class orbit_variation():
 #        rect_obj = ax.add_collection3d(Poly3DCollection(rects, color=color, alpha=0.5, edgecolor=None))
 #        return rect_obj
                    
-    def add_earth(self, ax):
-        '''This will add a sphere for the Earth. '''
+#    def add_earth(self, ax):
+#        '''This will add a sphere for the Earth. '''
         
         #Create a spherical surface. 
-        radius = 1
-        u = np.linspace(np.pi/2, 1.5*np.pi, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v)) 
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+#        radius = 1
+#        u = np.linspace(np.pi/2, 1.5*np.pi, 100) 
+#        v = np.linspace(0, np.pi, 100) 
+#        x = radius* np.outer(np.cos(u), np.sin(v)) 
+#        y = radius* np.outer(np.sin(u), np.sin(v))
+#        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
         
-        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)      
+#        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)      
         
-        u = np.linspace(-np.pi/2, np.pi/2, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v)) 
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
+#        u = np.linspace(-np.pi/2, np.pi/2, 100) 
+#        v = np.linspace(0, np.pi, 100) 
+#        x = radius* np.outer(np.cos(u), np.sin(v)) 
+#        y = radius* np.outer(np.sin(u), np.sin(v))
+#        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
         
-        ax.plot_surface(x, y, z, color='cyan', lw=0, alpha=1)  
+#        ax.plot_surface(x, y, z, color='cyan', lw=0, alpha=1)  
         
     
         

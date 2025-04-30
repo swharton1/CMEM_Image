@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 import pickle 
 import os
 
-from . import get_names_and_units as gnau
+from SXI_Core import get_names_and_units as gnau
+from SXI_Core import get_earth
+from SXI_Core import sig_figs
 from . import boundary_emissivity_functions as bef
 
 class analyse_fit():
@@ -289,15 +291,15 @@ class analyse_fit():
         
         # Sort cost axis and values. 
         if self.model['cost func'] == "sum squares":
-            ax6.text(0.5, 1.05, str(self.model['cost func'])+" : Min Cost = "+str(self.sig_figs(self.model['min cost'],3)), c="k", transform=ax6.transAxes, ha="center")
+            ax6.text(0.5, 1.05, str(self.model['cost func'])+" : Min Cost = "+str(sig_figs.sig_figs(self.model['min cost'],3)), c="k", transform=ax6.transAxes, ha="center")
             cpi = self.model['cost per it']
             ax6.set_ylabel("(keV cm"+r+"$^{-3}$ s"+r"$^{-1}$ sr"+r"$^{-1})^2$", fontsize=10)
         elif self.model['cost func'] == "absolute":
-            ax6.text(0.5, 1.05, str(self.model['cost func'])+" : Min Cost = "+str(self.sig_figs(self.model['min cost'],3)), c="k", transform=ax6.transAxes, ha="center")
+            ax6.text(0.5, 1.05, str(self.model['cost func'])+" : Min Cost = "+str(sig_figs.sig_figs(self.model['min cost'],3)), c="k", transform=ax6.transAxes, ha="center")
             cpi = self.model['cost per it']
             ax6.set_ylabel("keV cm"+r"$^{-3}$ s"+r"$^{-1}$ sr"+r"$^{-1}$", fontsize=10)
         elif self.model['cost func'] == "normalised":
-            ax6.text(0.5, 1.05, str(self.model['cost func'])+" : Min Cost = "+str(self.sig_figs(self.model['min cost'],3)), c="k", transform=ax6.transAxes, ha="center")
+            ax6.text(0.5, 1.05, str(self.model['cost func'])+" : Min Cost = "+str(sig_figs.sig_figs(self.model['min cost'],3)), c="k", transform=ax6.transAxes, ha="center")
             cpi = self.model['cost per it']
             ax6.set_ylabel("Cost", fontsize=10)
 
@@ -520,7 +522,7 @@ class analyse_fit():
             self.add_fov_boundaries(ax3)
         
             #Add the Earth on. 
-            self.add_earth(ax3) 
+            get_earth.make_earth_3d(ax3) 
         
             #Add orbit ellipse if it is provided.
             if ellipse is not None: 
@@ -553,7 +555,7 @@ class analyse_fit():
         label = ""
         for p,pval in enumerate(self.model['params best nm']):
                 pv = pval 
-                label += "{}={} {}, ".format(self.parameter_names[p], self.sig_figs(pv,3), self.parameter_units[p])
+                label += "{}={} {}, ".format(self.parameter_names[p], sig_figs.sig_figs(pv,3), self.parameter_units[p])
                 if len(self.parameter_names)//2 == p+1:
                     label += "\n"
         
@@ -661,7 +663,7 @@ class analyse_fit():
         parameter_names = [info[i][0] for i in info.keys()]
         parameter_units = [info[i][1] for i in info.keys()]
         for p,pval in enumerate(self.model['params0']):
-                label += "{}={} {}, ".format(parameter_names[p], self.sig_figs(pval,3), parameter_units[p])
+                label += "{}={} {}, ".format(parameter_names[p], sig_figs.sig_figs(pval,3), parameter_units[p])
                 if len(parameter_names)//2 == p+1:
                     label += "\n"
         
@@ -698,7 +700,7 @@ class analyse_fit():
             #Update the label too. 
             label = "" 
             for p,pval in enumerate(new_params):
-                label += "{}={} {}, ".format(parameter_names[p], self.sig_figs(pval,3), parameter_units[p])
+                label += "{}={} {}, ".format(parameter_names[p], sig_figs.sig_figs(pval,3), parameter_units[p])
                 if len(parameter_names)//2 == p+1:
                     label += "\n"
             labeltext.set_text(label)
@@ -734,31 +736,4 @@ class analyse_fit():
         ax2.plot([self.model['xpos'][-1][-1][-1],self.model['xpos'][-1][0][-1]], [self.model['ypos'][-1][-1][-1],self.model['ypos'][-1][0][-1]], [self.model['zpos'][-1][-1][-1],self.model['zpos'][-1][0][-1]], 'k', lw=0.5, zorder=3)
         ax2.plot([self.model['xpos'][-1][0][-1],self.model['xpos'][0][0][-1]], [self.model['ypos'][-1][0][-1],self.model['ypos'][0][0][-1]], [self.model['zpos'][-1][0][-1],self.model['zpos'][0][0][-1]], 'k', lw=0.5, zorder=3)
         
-    def add_earth(self, ax):
-        '''This will add a sphere for the Earth. '''
-        
-        #Create a spherical surface. 
-        radius = 1
-        u = np.linspace(0, 2*np.pi, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v))
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
 
-        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
-            
-        
-    def sig_figs(self, x: float, precision: int):
-        """
-        Rounds a number to number of significant figures
-        Parameters:
-        - x - the number to be rounded
-        - precision (integer) - the number of significant figures
-        Returns:
-        - float
-        """
-
-        x = float(x)
-        precision = int(precision)
-
-        return np.round(x, -int(np.floor(np.log10(abs(x)))) + (precision - 1))

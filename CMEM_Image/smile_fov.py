@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import process_time
 
+from SXI_Core import get_earth
 # THIS IS AN UPDATED VERSION THAT SHOULD BE BETTER. 
 
 class smile_fov():
@@ -212,7 +213,7 @@ class smile_fov():
         ax.set_zlabel('z')
         
         self.add_fov_boundaries(ax)
-        self.add_earth(ax)
+        get_earth.make_earth_3d_2(ax)
         ax.set_aspect('equal') 
         
         ax.view_init(elev,azim) 
@@ -234,23 +235,4 @@ class smile_fov():
         ax2.plot([self.xpos[-1][-1][-1],self.xpos[-1][0][-1]], [self.ypos[-1][-1][-1],self.ypos[-1][0][-1]], [self.zpos[-1][-1][-1],self.zpos[-1][0][-1]], color, lw=lw)
         ax2.plot([self.xpos[-1][0][-1],self.xpos[0][0][-1]], [self.ypos[-1][0][-1],self.ypos[0][0][-1]], [self.zpos[-1][0][-1],self.zpos[0][0][-1]], color, lw=lw)
           
-    def add_earth(self, ax):
-        '''This will add a sphere for the Earth. '''
-        
-        #Create a spherical surface. 
-        radius = 1
-        u = np.linspace(np.pi/2, 1.5*np.pi, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v)) 
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-        
-        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)
-        
-        u = np.linspace(-np.pi/2, np.pi/2, 100) 
-        v = np.linspace(0, np.pi, 100) 
-        x = radius* np.outer(np.cos(u), np.sin(v)) 
-        y = radius* np.outer(np.sin(u), np.sin(v))
-        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-        
-        ax.plot_surface(x, y, z, color='w', lw=0, alpha=1) 
+
