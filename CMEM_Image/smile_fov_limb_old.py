@@ -7,6 +7,7 @@ import os
 from matplotlib.patches import Wedge, Polygon, Circle, Arc
 
 from SXI_Core import get_earth 
+from SXI_Core import add_fov_boundaries
 
 class smile_limb():
     '''This object will use the spacecraft position and limb angle to work out the pointing and 
@@ -355,7 +356,7 @@ class smile_limb():
         ax.plot([0, self.b[0]], [0, self.b[1]], [0, self.b[2]], 'c-', label='b') 
         
         #Add the FOV boundaries. 
-        self.add_fov_boundaries(ax, lw=2) 
+        add_fov_boundaries.add_fov_boundaries(ax, self.xpos, self.ypos, self.zpos, lw=2) 
         
         #Add title to show smile location. 
         ax.set_title('SMILE: ({:.2f},{:.2f},{:.2f})\nAim: ({:.2f},{:.2f},{:.2f}) '.format(self.smile_loc[0], self.smile_loc[1], self.smile_loc[2], self.target_loc[0], self.target_loc[1], self.target_loc[2]))
@@ -438,18 +439,4 @@ class smile_limb():
             fig.savefig(self.plot_path+'Orbital_limb_diagram.png', dpi=800)
     
     
-    def add_fov_boundaries(self, ax2, color='k', lw=2):
-        '''This will add the FOV boundaries in black/white. '''
-        
-        #For corner pixels only. 
-        ax2.plot(self.xpos[0][0], self.ypos[0][0], self.zpos[0][0], color, lw=lw)
-        ax2.plot(self.xpos[0][-1], self.ypos[0][-1], self.zpos[0][-1], color, lw=lw)
-        ax2.plot(self.xpos[-1][0], self.ypos[-1][0], self.zpos[-1][0], color, lw=lw)
-        ax2.plot(self.xpos[-1][-1], self.ypos[-1][-1], self.zpos[-1][-1], color, lw=lw)
-        
-        #Join corners together. 
-        ax2.plot([self.xpos[0][0][-1],self.xpos[0][-1][-1]], [self.ypos[0][0][-1],self.ypos[0][-1][-1]], [self.zpos[0][0][-1],self.zpos[0][-1][-1]], color, lw=lw)
-        ax2.plot([self.xpos[0][-1][-1],self.xpos[-1][-1][-1]], [self.ypos[0][-1][-1],self.ypos[-1][-1][-1]], [self.zpos[0][-1][-1],self.zpos[-1][-1][-1]], color, lw=lw)
-        ax2.plot([self.xpos[-1][-1][-1],self.xpos[-1][0][-1]], [self.ypos[-1][-1][-1],self.ypos[-1][0][-1]], [self.zpos[-1][-1][-1],self.zpos[-1][0][-1]], color, lw=lw)
-        ax2.plot([self.xpos[-1][0][-1],self.xpos[0][0][-1]], [self.ypos[-1][0][-1],self.ypos[0][0][-1]], [self.zpos[-1][0][-1],self.zpos[0][0][-1]], color, lw=lw)
-                   
+

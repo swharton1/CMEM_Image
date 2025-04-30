@@ -14,6 +14,8 @@ from SXI_Core import coord_conv as cconv
 from SXI_Core import sig_figs
 from SXI_Core import get_earth 
 from SXI_Core import calc_pressures
+from SXI_Core import add_fov_boundaries
+
 
 class image_sim(): 
     '''This is the object to simulate the image.''' 
@@ -199,7 +201,7 @@ class image_sim():
         cbar2.set_ticklabels([r'$10^{'+str(i)+'}$' for i in cticks])
         cbar2.set_label('SWCX Emissivity (eV cm'+r'$^{-3}$ s'+r'$^{-1}$)') 
         #Add FOV boundaries. 
-        self.add_fov_boundaries(ax2)
+        add_fov_boundaries.add_fov_boundaries(ax2, self.smile.xpos, self.smile.ypos, self.smile.zpos)
         
         #Add the Earth on. 
         get_earth.make_earth_3d(ax2) 
@@ -249,7 +251,7 @@ class image_sim():
         self.X_all, self.Y_all, self.Z_all = np.meshgrid(x,y,z)
         
         #Convert to Shue coordinates. 
-        r_all, theta_all, phi_all = self.convert_xyz_to_shue_coords(self.X_all,self.Y_all,self.Z_all)
+        r_all, theta_all, phi_all = cconv.convert_xyz_to_shue_coords(self.X_all,self.Y_all,self.Z_all)
         
         #Calculate the emissivity for each LOS coordinate. 
         self.eta_all = self.current_func(r_all, theta_all, phi_all, *self.lin_coeffs, *self.params0)
@@ -327,7 +329,7 @@ class image_sim():
         #emit = ax1.scatter(self.X_all[bright], self.Y_all[bright], self.Z_all[bright], c=los_log[bright], cmap="hot", s=0.001, alpha=0.2, vmin=vmin, vmax=vmax)
         
         #Add FOV boundaries. 
-        self.add_fov_boundaries(ax1, color='w', lw=1)
+        add_fov_boundaries.add_fov_boundaries(ax1, self.smile.xpos, self.smile.ypos, self.smile.zpos, color='w', lw=1)
         
         #Save figure.
         if fname is None:
@@ -417,7 +419,7 @@ class image_sim():
         #emit_outer = ax1.scatter(self.X_all[bright_outer], self.Y_all[bright_outer], self.Z_all[bright_outer], c=los_log[bright_outer], cmap=cmap, s=0.001, alpha=0.1, vmin=vmin, vmax=vmax)
         
         #Add FOV boundaries. 
-        self.add_fov_boundaries(ax1, color='w', lw=1)
+        add_fov_boundaries.add_fov_boundaries(ax1, self.smile.xpos, self.smile.ypos, self.smile.zpos, color='w', lw=1)
         
         #Now we are going to add the SMILE logo. 
         #https://towardsdatascience.com/how-to-add-an-image-to-a-matplotlib-plot-in-python-76098becaf53
@@ -472,21 +474,6 @@ class image_sim():
             
             
                 
-    def add_fov_boundaries(self, ax2, color='k', lw=2):
-        '''This will add the FOV boundaries in black/white. '''
-        
-        #For corner pixels only. 
-        ax2.plot(self.smile.xpos[0][0], self.smile.ypos[0][0], self.smile.zpos[0][0], color, lw=lw)
-        ax2.plot(self.smile.xpos[0][-1], self.smile.ypos[0][-1], self.smile.zpos[0][-1], color, lw=lw)
-        ax2.plot(self.smile.xpos[-1][0], self.smile.ypos[-1][0], self.smile.zpos[-1][0], color, lw=lw)
-        ax2.plot(self.smile.xpos[-1][-1], self.smile.ypos[-1][-1], self.smile.zpos[-1][-1], color, lw=lw)
-        
-        #Join corners together. 
-        ax2.plot([self.smile.xpos[0][0][-1],self.smile.xpos[0][-1][-1]], [self.smile.ypos[0][0][-1],self.smile.ypos[0][-1][-1]], [self.smile.zpos[0][0][-1],self.smile.zpos[0][-1][-1]], color, lw=lw)
-        ax2.plot([self.smile.xpos[0][-1][-1],self.smile.xpos[-1][-1][-1]], [self.smile.ypos[0][-1][-1],self.smile.ypos[-1][-1][-1]], [self.smile.zpos[0][-1][-1],self.smile.zpos[-1][-1][-1]], color, lw=lw)
-        ax2.plot([self.smile.xpos[-1][-1][-1],self.smile.xpos[-1][0][-1]], [self.smile.ypos[-1][-1][-1],self.smile.ypos[-1][0][-1]], [self.smile.zpos[-1][-1][-1],self.smile.zpos[-1][0][-1]], color, lw=lw)
-        ax2.plot([self.smile.xpos[-1][0][-1],self.smile.xpos[0][0][-1]], [self.smile.ypos[-1][0][-1],self.smile.ypos[0][0][-1]], [self.smile.zpos[-1][0][-1],self.smile.zpos[0][0][-1]], color, lw=lw)
-        
 
             
         

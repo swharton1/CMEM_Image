@@ -6,6 +6,7 @@ import os
 
 from SXI_Core import calc_pressures
 from SXI_Core import get_earth 
+from SXI_Core import add_fov_boundaries
 
 class ppmlr_image():
     '''This class takes in the ppmlr simulation object and the smile fov object and calculates an image through the simulation.'''
@@ -254,7 +255,7 @@ class ppmlr_image():
         cbar2.set_ticklabels([r'$10^{'+str(i)+'}$' for i in cticks])
         cbar2.set_label('SWCX Emissivity (eV cm'+r'$^{-3}$ s'+r'$^{-1}$)') 
         #Add FOV boundaries. 
-        self.add_fov_boundaries(ax2)
+        add_fov_boundaries.add_fov_boundaries(ax2, self.smile)
         
         #Add the Earth on. 
         get_earth.make_earth_3d(ax2) 
@@ -366,21 +367,6 @@ class ppmlr_image():
             print ('Saved to: ', self.plot_path+'PPMLR_Image_Sections_n_{:.1f}_SMILE_({:.2f},{:.2f},{:.2f})_Target_({:.2f},{:.2f},{:.2f})_{}.png'.format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], savetag))  
             fig.savefig(self.plot_path+'PPMLR_Image_Sections_n_{:.1f}_SMILE_({:.2f},{:.2f},{:.2f})_Target_({:.2f},{:.2f},{:.2f})_{}.png'.format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2], savetag))
     
-       
-    def add_fov_boundaries(self, ax2):
-        '''This will add the FOV boundaries in black. '''
-        
-        #For corner pixels only. 
-        ax2.plot(self.smile.xpos[0][0], self.smile.ypos[0][0], self.smile.zpos[0][0], 'k', lw=2)
-        ax2.plot(self.smile.xpos[0][-1], self.smile.ypos[0][-1], self.smile.zpos[0][-1], 'k', lw=2)
-        ax2.plot(self.smile.xpos[-1][0], self.smile.ypos[-1][0], self.smile.zpos[-1][0], 'k', lw=2)
-        ax2.plot(self.smile.xpos[-1][-1], self.smile.ypos[-1][-1], self.smile.zpos[-1][-1], 'k', lw=2)
-        
-        #Join corners together. 
-        ax2.plot([self.smile.xpos[0][0][-1],self.smile.xpos[0][-1][-1]], [self.smile.ypos[0][0][-1],self.smile.ypos[0][-1][-1]], [self.smile.zpos[0][0][-1],self.smile.zpos[0][-1][-1]], 'k')
-        ax2.plot([self.smile.xpos[0][-1][-1],self.smile.xpos[-1][-1][-1]], [self.smile.ypos[0][-1][-1],self.smile.ypos[-1][-1][-1]], [self.smile.zpos[0][-1][-1],self.smile.zpos[-1][-1][-1]], 'k')
-        ax2.plot([self.smile.xpos[-1][-1][-1],self.smile.xpos[-1][0][-1]], [self.smile.ypos[-1][-1][-1],self.smile.ypos[-1][0][-1]], [self.smile.zpos[-1][-1][-1],self.smile.zpos[-1][0][-1]], 'k')
-        ax2.plot([self.smile.xpos[-1][0][-1],self.smile.xpos[0][0][-1]], [self.smile.ypos[-1][0][-1],self.smile.ypos[0][0][-1]], [self.smile.zpos[-1][0][-1],self.smile.zpos[0][0][-1]], 'k')
-    
+
 
         

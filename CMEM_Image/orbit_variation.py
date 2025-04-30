@@ -304,7 +304,7 @@ class orbit_variation():
         print ('Saved: ', self.plot_path+'orbital_animation_{}_{}.gif'.format(t[0].strftime('%Y%m%d_%H:%M'), t[-1].strftime('%Y%m%d_%H:%M')))
         
     def add_fov_boundaries(self, ax2, smile, color='k', lw=2):
-        '''This will add the FOV boundaries in black/white. '''
+        '''This will add the FOV boundaries in black/white. Returns the objects. Special case this one so don't use SXI_Core. '''
         
         #For corner pixels only. 
         c1 = ax2.plot(smile.xpos[0][0], smile.ypos[0][0], smile.zpos[0][0], color, lw=lw)
@@ -331,28 +331,5 @@ class orbit_variation():
 #        rects = [[v1, v2, v3, v4, v1]]
 #        rect_obj = ax.add_collection3d(Poly3DCollection(rects, color=color, alpha=0.5, edgecolor=None))
 #        return rect_obj
-                   
-#    def add_earth(self, ax):
-#        '''This will add a sphere for the Earth. '''
-        
-        #Create a spherical surface. 
-#        radius = 1
-#        u = np.linspace(np.pi/2, 1.5*np.pi, 100) 
-#        v = np.linspace(0, np.pi, 100) 
-#        x = radius* np.outer(np.cos(u), np.sin(v)) 
-#        y = radius* np.outer(np.sin(u), np.sin(v))
-#        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-        
-#        ax.plot_surface(x, y, z, color='k', lw=0, alpha=1)      
-        
-#        u = np.linspace(-np.pi/2, np.pi/2, 100) 
-#        v = np.linspace(0, np.pi, 100) 
-#        x = radius* np.outer(np.cos(u), np.sin(v)) 
-#        y = radius* np.outer(np.sin(u), np.sin(v))
-#        z = radius* np.outer(np.ones(np.size(u)), np.cos(v))
-        
-#        ax.plot_surface(x, y, z, color='cyan', lw=0, alpha=1)  
-        
-    
-        
+
 

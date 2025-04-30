@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from time import process_time
 
 from SXI_Core import get_earth
+from SXI_Core import add_fov_boundaries
 # THIS IS AN UPDATED VERSION THAT SHOULD BE BETTER. 
 
 class smile_fov():
@@ -212,7 +213,7 @@ class smile_fov():
         ax.set_ylabel('y')
         ax.set_zlabel('z')
         
-        self.add_fov_boundaries(ax)
+        add_fov_boundaries.add_fov_boundaries(ax, self.xpos, self.ypos, self.zpos)
         get_earth.make_earth_3d_2(ax)
         ax.set_aspect('equal') 
         
@@ -220,19 +221,4 @@ class smile_fov():
         
         self.fig2 = fig
     
-    def add_fov_boundaries(self, ax2, color='k', lw=1):
-        '''This will add the FOV boundaries in black/white. '''
-        
-        #For corner pixels only. 
-        ax2.plot(self.xpos[0][0], self.ypos[0][0], self.zpos[0][0], color, lw=lw)
-        ax2.plot(self.xpos[0][-1], self.ypos[0][-1], self.zpos[0][-1], color, lw=lw)
-        ax2.plot(self.xpos[-1][0], self.ypos[-1][0], self.zpos[-1][0], color, lw=lw)
-        ax2.plot(self.xpos[-1][-1], self.ypos[-1][-1], self.zpos[-1][-1], color, lw=lw)
-        
-        #Join corners together. 
-        ax2.plot([self.xpos[0][0][-1],self.xpos[0][-1][-1]], [self.ypos[0][0][-1],self.ypos[0][-1][-1]], [self.zpos[0][0][-1],self.zpos[0][-1][-1]], color, lw=lw)
-        ax2.plot([self.xpos[0][-1][-1],self.xpos[-1][-1][-1]], [self.ypos[0][-1][-1],self.ypos[-1][-1][-1]], [self.zpos[0][-1][-1],self.zpos[-1][-1][-1]], color, lw=lw)
-        ax2.plot([self.xpos[-1][-1][-1],self.xpos[-1][0][-1]], [self.ypos[-1][-1][-1],self.ypos[-1][0][-1]], [self.zpos[-1][-1][-1],self.zpos[-1][0][-1]], color, lw=lw)
-        ax2.plot([self.xpos[-1][0][-1],self.xpos[0][0][-1]], [self.ypos[-1][0][-1],self.ypos[0][0][-1]], [self.zpos[-1][0][-1],self.zpos[0][0][-1]], color, lw=lw)
-          
 
