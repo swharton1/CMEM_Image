@@ -1,9 +1,7 @@
-#from . imporpt read_ppmlr
+
 from . import smile_fov 
 from . import boundary_emissivity_functions
 from . import sim_image 
-#from . import get_names_and_units
-#from . import set_initial_params
 from . import ppmlr_image_old
 from . import ppmlr_image
 from . import ellipse
@@ -15,14 +13,11 @@ from . import analyse_pixel_variation
 from . import analyse_orbit_variation
 from . import analyse_density_variation
 from . import analyse_tilt_variation
-#from . import get_meridians
 from . import smile_fov_limb 
 from . import smile_fov_limb_old
 from . import load_ephemeris_vlocal 
-from . import ppmlr_fits
+
 from . import orbit_variation 
-#from . import coord_conv
-#from . import read_fits_cube
 from . import load_orbit_data
 
 import os 

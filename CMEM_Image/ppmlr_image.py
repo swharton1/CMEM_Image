@@ -132,7 +132,7 @@ class ppmlr_image():
     #PLOTTING FUNCTIONS 
     ###################
     
-    def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, los_max=6, image_name=None, ellipse=None):
+    def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, los_max=6, image_name=None, ellipse=None, save=False):
         '''This will plot the simulated image it has created. 
         
         Parameters
@@ -180,6 +180,7 @@ class ppmlr_image():
         
         mesh = ax.pcolormesh(phi_pixels, theta_pixels, self.los_intensity, cmap=cmap, vmin=0, vmax=los_max)
         ax.set_title("LOS integration through PPMLR\n simulation from SMILE")
+        ax.set_title("LOS simulation from SMILE\n"+f"{self.ppmlr.filename}")
         ax.set_xlabel('deg')
         ax.set_ylabel('deg')
         ax.set_aspect('equal')
@@ -224,14 +225,15 @@ class ppmlr_image():
         ax2.view_init(elev,azim) 
 
                     
-        #Save the image to a standard name. 
-        if image_name is None: 
+        #Save the image to a standard name.
+        if save: 
+            if image_name is None: 
+                
             
-        
-            fig.savefig(self.plot_path+"PPMLR_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
-        
-        else:
-            fig.savefig(image_name) 
+                fig.savefig(self.plot_path+"PPMLR_image_sim_n_{}_SMILE_{}_{}_{}_Target_{}_{}_{}_nxm_{}_{}.png".format(self.density, self.smile.smile_loc[0], self.smile.smile_loc[1], self.smile.smile_loc[2], self.smile.target_loc[0], self.smile.target_loc[1], self.smile.target_loc[2],self.smile.n_pixels, self.smile.m_pixels)) 
+            
+            else:
+                fig.savefig(image_name) 
     
     def plot_image_sections(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, los_max=None, image_name=None, ellipse=None, save=False, savetag=''):
         '''This will plot the series of images created from emission at different distances, plus the total 
