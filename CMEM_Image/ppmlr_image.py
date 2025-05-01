@@ -10,6 +10,9 @@ from SXI_Core import get_earth
 from SXI_Core import calc_pressures
 from SXI_Core import add_fov_boundaries
 
+#Experimenting with overlays code. 
+from SXI_Core import overlays 
+
 class ppmlr_image():
     '''This class takes in the ppmlr simulation object and the smile fov object and calculates an image through the simulation.'''
     
@@ -132,7 +135,7 @@ class ppmlr_image():
     #PLOTTING FUNCTIONS 
     ###################
     
-    def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, los_max=6, image_name=None, ellipse=None, save=False):
+    def plot_image(self, elev=45, azim=45, cmap='hot', vmin=-8, vmax=-4, levels=100, colour_cap=0, los_max=6, image_name=None, ellipse=None, save=False, add_overlays=False):
         '''This will plot the simulated image it has created. 
         
         Parameters
@@ -171,6 +174,9 @@ class ppmlr_image():
             print ('Not an updated SMILE FOV limb object, so angular arrays need reversing.') 
             theta_pixels = -np.rad2deg(theta_pixels)
             phi_pixels = -np.rad2deg(phi_pixels)
+        else:
+            theta_pixels = np.rad2deg(theta_pixels)
+            phi_pixels = np.rad2deg(phi_pixels) 
         
         #You do not need to do this with the new SMILE FOV Limb object. 
         #In this orientation, Earth will ALWAYS be on the left of the plot by definition. 
@@ -186,6 +192,10 @@ class ppmlr_image():
         ax.set_aspect('equal')
         cbar = plt.colorbar(mesh, ax=ax, shrink=0.8)
         cbar.set_label('SWCX LOS Intensity (keV cm'+r'$^{-2}$ s'+r'$^{-1}$ sr'+r'$^{-1}$)') 
+        
+        #Record image limits for overlays. 
+        xlims = ax.get_xlim()
+        ylims = ax.get_ylim()
         
         ax2 = fig.add_subplot(122, projection='3d')
 
@@ -224,7 +234,23 @@ class ppmlr_image():
         ax2.set_aspect('equal')
         ax2.view_init(elev,azim) 
 
-                    
+        
+        #Experiment adding the overlays here. 
+        #You need to use smile_fov_limb.py as it has image unit vectors. 
+        if add_overlays:
+        
+            #Add overlay to image.  
+            #x, y, z = overlays.add_x_axis(ax, self.smile.xi_unit, self.smile.yi_unit, -self.smile.L_unit, self.smile.smile_loc)           
+        
+            #ax.set_xlim(xlims)
+            #ax.set_ylim(ylims)
+            
+            #Add structure to 3D plot too. 
+            #ax2.plot(x,y,z, color='blue') 
+        
+            #Try adding coordinate axes at aim point. 
+            overlays.add_axes_at_aim_point(ax,self.smile.xi_unit, self.smile.yi_unit, -self.smile.L_unit, self.smile.smile_loc, self.smile.target_loc)  
+              
         #Save the image to a standard name.
         if save: 
             if image_name is None: 
