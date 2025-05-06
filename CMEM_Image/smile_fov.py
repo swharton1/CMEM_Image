@@ -68,6 +68,14 @@ class smile_fov():
         te = process_time()
         print ("Time = {:.1f}s".format(te-ts))
 
+        #Define camera unit vectors. Do for overlays here. Designed to match image unit vectors to smile_fov_limb for use with transformations. 
+        #Define in same way as JXI then change after. 
+        self.im_x = np.array([1,0,0])#x components of xi, yi and zi 
+        self.im_y = np.array([0,1,0])#y components of xi, yi and zi
+        self.im_z = np.array([0,0,1])#z components of xi, yi and zi  
+        
+
+
         ts = process_time()
         print ("Tilt camera: ")
         self.tilt_sxi_camera() 
@@ -80,6 +88,17 @@ class smile_fov():
         te = process_time()
         print ("Time = {:.1f}s".format(te-ts))
 
+        #These are the image unit vectors defined the same way as in JXI. 
+        xi = np.array([self.im_x_final[0], self.im_y_final[0], self.im_z_final[0]]) 
+        yi = np.array([self.im_x_final[1], self.im_y_final[1], self.im_z_final[1]]) 
+        zi = np.array([self.im_x_final[2], self.im_y_final[2], self.im_z_final[2]]) 
+        
+        #Try to make them the same as smile_fov_limb. 
+        self.xi_unit = - yi
+        self.yi_unit = zi
+        self.zi_unit = -xi 
+        self.L_unit = -self.zi_unit
+        
         ts = process_time()
         print ("Get LOS coordinates: ")
         self.get_LOS_coords()
@@ -120,6 +139,12 @@ class smile_fov():
         self.pixels_x_tilted = self.pixels_x
         self.pixels_y_tilted = self.pixels_y*np.cos(self.sxi_tilt) - self.pixels_z*np.sin(self.sxi_tilt)
         self.pixels_z_tilted = self.pixels_y*np.sin(self.sxi_tilt) + self.pixels_z*np.cos(self.sxi_tilt)
+        
+        #Rotate image unit vectors about the x axis. 
+        #These are the coordinate axes seen in the image frame. 
+        self.im_x_tilted = self.im_x
+        self.im_y_tilted = self.im_y*np.cos(self.sxi_tilt) - self.im_z*np.sin(self.sxi_tilt) 
+        self.im_z_tilted = self.im_y*np.sin(self.sxi_tilt) + self.im_z*np.cos(self.sxi_tilt)
                  
 
     def rotate_camera(self):
@@ -133,12 +158,23 @@ class smile_fov():
         self.pixels_x_roty = self.pixels_x_tilted*np.cos(a) + self.pixels_z_tilted*np.sin(a)
         self.pixels_y_roty = self.pixels_y_tilted
         self.pixels_z_roty = -self.pixels_x_tilted*np.sin(a) + self.pixels_z_tilted*np.cos(a)
+        
+        #Rotate image vectors around y axis. 
+        self.im_x_roty = self.im_x_tilted*np.cos(a) + self.im_z_tilted*np.sin(a)
+        self.im_y_roty = self.im_y_tilted
+        self.im_z_roty = -self.im_x_tilted*np.sin(a) + self.im_z_tilted*np.cos(a)
             
         # This will rotate about the z axis. 
         self.pixels_x_final = self.pixels_x_roty*np.cos(self.sxi_phi) - self.pixels_y_roty*np.sin(self.sxi_phi)
         self.pixels_y_final = self.pixels_x_roty*np.sin(self.sxi_phi) + self.pixels_y_roty*np.cos(self.sxi_phi)
         self.pixels_z_final = self.pixels_z_roty
-               
+
+        #Rotate image vectors around z axis. 
+        self.im_x_final = self.im_x_roty*np.cos(self.sxi_phi) - self.im_y_roty*np.sin(self.sxi_phi)
+        self.im_y_final = self.im_x_roty*np.sin(self.sxi_phi) + self.im_y_roty*np.cos(self.sxi_phi)
+        self.im_z_final = self.im_z_roty  
+        
+                       
     def get_LOS_coords(self):
         '''This will calculate the coordinates along the LOS for a given 
         coordinate spacing.'''

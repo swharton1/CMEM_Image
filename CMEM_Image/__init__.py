@@ -16,7 +16,6 @@ from . import analyse_tilt_variation
 from . import smile_fov_limb 
 from . import smile_fov_limb_old
 from . import load_ephemeris_vlocal 
-from . import overlays 
 from . import orbit_variation 
 from . import load_orbit_data
 
